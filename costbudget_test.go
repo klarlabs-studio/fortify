@@ -3,6 +3,7 @@ package fortify_test
 import (
 	"context"
 	"errors"
+	"math"
 	"testing"
 	"time"
 
@@ -83,7 +84,6 @@ func TestWithCostBudget_ResetAfterAutoResets(t *testing.T) {
 		MaxCost:    1.0,
 		CostFunc:   func(any, error) float64 { return 0.75 },
 		ResetAfter: time.Minute,
-		// nowForTest is an unexported test hook on the config; see below.
 	}.WithClockForTest(func() time.Time { return clock }))
 
 	ctx := context.Background()
@@ -101,6 +101,70 @@ func TestWithCostBudget_ResetAfterAutoResets(t *testing.T) {
 	clock = clock.Add(time.Minute + time.Nanosecond)
 	if _, err := chain.Execute(ctx, func(context.Context) (string, error) { return "", nil }); err != nil {
 		t.Fatalf("expected auto-reset after ResetAfter, got %v", err)
+	}
+}
+
+func TestWithCostBudget_PanicsOnInvalidMaxCost(t *testing.T) {
+	cases := []struct {
+		name    string
+		maxCost float64
+	}{
+		{"zero", 0},
+		{"negative", -1},
+		{"NaN", math.NaN()},
+		{"PosInf", math.Inf(1)},
+		{"NegInf", math.Inf(-1)},
+		{"overflow", 1e18}, // 1e18 * 1e6 overflows int64 micro-USD
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			defer func() {
+				if r := recover(); r == nil {
+					t.Fatalf("expected panic for MaxCost=%v, got none", tc.maxCost)
+				}
+			}()
+			fortify.New[string]().WithCostBudget(fortify.CostBudgetConfig{
+				MaxCost:  tc.maxCost,
+				CostFunc: func(any, error) float64 { return 0 },
+			})
+		})
+	}
+}
+
+func TestWithCostBudget_ValidMaxCostDoesNotPanic(t *testing.T) {
+	defer func() {
+		if r := recover(); r != nil {
+			t.Fatalf("unexpected panic for valid MaxCost: %v", r)
+		}
+	}()
+	chain := fortify.New[string]().WithCostBudget(fortify.CostBudgetConfig{
+		MaxCost:  5.0,
+		CostFunc: func(any, error) float64 { return 1.0 },
+	})
+	if _, err := chain.Execute(context.Background(), func(context.Context) (string, error) {
+		return "ok", nil
+	}); err != nil {
+		t.Fatalf("unexpected err: %v", err)
+	}
+}
+
+func TestWithCostBudget_CostFuncNaNInfOverflowChargesNothing(t *testing.T) {
+	// A bad CostFunc return (NaN/Inf/overflow) must not corrupt the budget:
+	// it is guarded to charge nothing rather than saturating to int64-max and
+	// instantly breaching, or producing a torn micro-USD value.
+	for _, bad := range []float64{math.NaN(), math.Inf(1), math.Inf(-1), 1e18, -1.0} {
+		chain := fortify.New[string]().WithCostBudget(fortify.CostBudgetConfig{
+			MaxCost:  1.0,
+			CostFunc: func(any, error) float64 { return bad },
+		})
+		// Several calls with a bad cost must never breach (nothing charged).
+		for i := 0; i < 5; i++ {
+			if _, err := chain.Execute(context.Background(), func(context.Context) (string, error) {
+				return "ok", nil
+			}); err != nil {
+				t.Fatalf("bad cost %v call %d: unexpected breach: %v", bad, i, err)
+			}
+		}
 	}
 }
 
