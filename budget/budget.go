@@ -95,6 +95,11 @@ type Config[T any] struct {
 	// then drive Reset manually.
 	ResetAfter time.Duration
 
+	// Clock supplies the current time for ResetAfter windowing. Nil
+	// defaults to time.Now. Override it to drive the rolling window from
+	// a deterministic or virtualized clock (tests, simulations).
+	Clock func() time.Time
+
 	// Logger receives diagnostic warnings (callback panics, breach
 	// notices). Nil disables internal logging.
 	Logger *slog.Logger
@@ -128,7 +133,11 @@ func New[T any](cfg Config[T]) (*Budget[T], error) {
 	if cfg.Max.Tokens <= 0 && cfg.Max.USDMicros <= 0 && cfg.Max.Calls <= 0 {
 		return nil, errors.New("budget.New: at least one Max field must be positive")
 	}
-	return &Budget[T]{cfg: cfg, now: time.Now}, nil
+	clock := cfg.Clock
+	if clock == nil {
+		clock = time.Now
+	}
+	return &Budget[T]{cfg: cfg, now: clock}, nil
 }
 
 // Execute runs fn, charges the resulting cost against the budget, and

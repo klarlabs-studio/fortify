@@ -177,16 +177,15 @@ func TestReset(t *testing.T) {
 }
 
 func TestResetAfter_AutoResetsOnceWindowElapses(t *testing.T) {
+	clock := time.Unix(0, 0)
 	b, err := New[res](Config[res]{
 		Max:        Cost{Calls: 1},
 		ResetAfter: time.Minute,
+		Clock:      func() time.Time { return clock },
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	clock := time.Unix(0, 0)
-	b.now = func() time.Time { return clock }
 
 	ctx := context.Background()
 
@@ -210,13 +209,12 @@ func TestResetAfter_AutoResetsOnceWindowElapses(t *testing.T) {
 }
 
 func TestResetAfter_DoesNotResetBeforeWindow(t *testing.T) {
+	clock := time.Unix(0, 0)
 	b, _ := New[res](Config[res]{
 		Max:        Cost{Calls: 2},
 		ResetAfter: time.Minute,
+		Clock:      func() time.Time { return clock },
 	})
-
-	clock := time.Unix(0, 0)
-	b.now = func() time.Time { return clock }
 
 	ctx := context.Background()
 	for i := 0; i < 2; i++ {
@@ -232,11 +230,11 @@ func TestResetAfter_DoesNotResetBeforeWindow(t *testing.T) {
 }
 
 func TestResetAfter_ZeroDisablesAutoReset(t *testing.T) {
-	b, _ := New[res](Config[res]{
-		Max: Cost{Calls: 1},
-	})
 	clock := time.Unix(0, 0)
-	b.now = func() time.Time { return clock }
+	b, _ := New[res](Config[res]{
+		Max:   Cost{Calls: 1},
+		Clock: func() time.Time { return clock },
+	})
 
 	ctx := context.Background()
 	_, _ = b.Execute(ctx, func(context.Context) (res, error) { return res{}, nil })
