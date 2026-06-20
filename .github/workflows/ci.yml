@@ -1,192 +1,36 @@
+# Thin caller for the shared klarlabs-studio Go CI bar.
+# All gate logic lives in the reusable workflow — bump versions / add jobs
+# there, once, org-wide. fortify is perf-sensitive and validates multi-OS on
+# push to main, so coverage, benchmark, and cross-platform are all enabled.
 name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
     paths-ignore:
       - '**.md'
       - 'docs/**'
       - 'LICENSE'
   pull_request:
-    branches: [ main ]
+    branches: [main]
     paths-ignore:
       - '**.md'
       - 'docs/**'
       - 'LICENSE'
-
-permissions:
-  contents: write
-  security-events: write
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  test:
-    name: Test
-    # PRs use ubuntu only (cuts macOS=10x and Windows=2x cost).
-    # Push to main still validates all three; release.yml gates final tags.
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: ${{ github.event_name == 'pull_request' && fromJSON('["ubuntu-latest"]') || fromJSON('["ubuntu-latest", "macos-latest", "windows-latest"]') }}
-        go: ['1.25']
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-
-    - name: Set up Go
-      uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
-      with:
-        go-version: ${{ matrix.go }}
-        cache: true
-
-    - name: Download dependencies
-      run: go mod download
-
-    - name: Verify dependencies
-      run: go mod verify
-
-    - name: Run tests
-      shell: bash
-      run: go test -v -race -coverprofile=coverage.out -covermode=atomic ./...
-
-    - name: Install coverctl
-      if: matrix.os == 'ubuntu-latest' && matrix.go == '1.25'
-      run: go install go.klarlabs.de/coverctl@latest
-
-    - name: Check coverage
-      if: matrix.os == 'ubuntu-latest' && matrix.go == '1.25'
-      run: coverctl report --profile=coverage.out
-
-    - name: Generate coverage badge
-      if: matrix.os == 'ubuntu-latest' && matrix.go == '1.25' && github.event_name == 'push' && github.ref == 'refs/heads/main'
-      run: coverctl badge --profile=coverage.out --output=assets/coverage-badge.svg
-
-    - name: Commit coverage badge
-      if: matrix.os == 'ubuntu-latest' && matrix.go == '1.25' && github.event_name == 'push' && github.ref == 'refs/heads/main'
-      run: |
-        git config --local user.email "github-actions[bot]@users.noreply.github.com"
-        git config --local user.name "github-actions[bot]"
-        git add assets/coverage-badge.svg
-        git diff --staged --quiet || git commit -m "chore: update coverage badge [skip ci]"
-        git push
-
-  lint:
-    name: Lint
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-
-    - name: Set up Go
-      uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
-      with:
-        go-version: '1.25'
-        cache: true
-
-    - name: Run golangci-lint
-      uses: golangci/golangci-lint-action@82606bf257cbaff209d206a39f5134f0cfbfd2ee # v9.2.1
-      with:
-        version: v2.7.2
-        args: --timeout=5m ./...
-
-  build:
-    name: Build
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-
-    - name: Set up Go
-      uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
-      with:
-        go-version: '1.25'
-        cache: true
-
-    - name: Build
-      run: go build -v ./...
-
-  benchmark:
-    name: Benchmark
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-
-    - name: Set up Go
-      uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
-      with:
-        go-version: '1.25'
-        cache: true
-
-    - name: Run benchmarks
-      run: go test -bench=. -benchmem -run=^$ ./... | tee benchmark.txt
-
-    - name: Upload benchmark results
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-        name: benchmark-results
-        path: benchmark.txt
-        retention-days: 7
-
-  security:
-    name: Security Scan
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-
-    - name: Set up Go
-      uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
-      with:
-        go-version: '1.25'
-        cache: true
-
-    - name: Install nox
-      # Pinned to v0.8.1; bump explicitly to track upstream releases.
-      # Binary lives at github.com/nox-hq/nox/cli; rename after install.
-      run: |
-        go install github.com/nox-hq/nox/cli@v0.8.1
-        mv "$(go env GOPATH)/bin/cli" "$(go env GOPATH)/bin/nox"
-
-    - name: Run nox security scan
-      # Source-built nox CLIs report exit 1 on baselined findings (an
-      # upstream quirk). Tolerate via the SARIF upload — code-scanning
-      # alerts are the source of truth, not the step exit code.
-      run: |
-        mkdir -p nox-out
-        nox -format sarif,cdx -output nox-out scan . || true
-        test -s nox-out/results.sarif
-
-    - name: Upload nox SARIF to code scanning
-      uses: github/codeql-action/upload-sarif@7211b7c8077ea37d8641b6271f6a365a22a5fbfa # v4
-      with:
-        sarif_file: nox-out/results.sarif
-      if: always() && hashFiles('nox-out/results.sarif') != ''
-
-    - name: Upload nox artifacts
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-        name: security-scan-results
-        path: nox-out/
-        retention-days: 7
-      if: always()
-
-  dependency-review:
-    name: Dependency Review
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-    - name: Dependency Review
-      uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
-      with:
-        fail-on-severity: high
+  ci:
+    uses: klarlabs-studio/.github/.github/workflows/go-ci.yml@main
+    permissions:
+      contents: read
+      security-events: write
+      pull-requests: write
+    secrets: inherit
+    with:
+      coverage: true
+      benchmark: true
+      cross-platform: true

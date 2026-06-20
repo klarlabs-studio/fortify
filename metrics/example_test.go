@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"go.klarlabs.de/fortify/metrics"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"go.klarlabs.de/fortify/metrics"
 )
 
 // Example demonstrates basic Prometheus metrics integration.

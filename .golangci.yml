@@ -27,6 +27,11 @@ linters:
         - G115
   exclusions:
     rules:
+      # Tests legitimately use math/rand (deterministic fixtures, fuzz
+      # seeds). G404 weak-RNG does not apply to test code. (Org bar.)
+      - path: _test\.go
+        linters:
+          - gosec
       # Preset chains intentionally share structure (CB -> Retry -> Timeout)
       # across HTTPClient / DatabaseQuery / RPCDownstream. Tuning differs;
       # extracting a shared helper would obscure each preset's intent.
