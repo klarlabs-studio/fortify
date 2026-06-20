@@ -6,20 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
-### CI
+## [1.7.0] - 2026-06-20
 
-- **actions:** Gate cross-OS to push-to-main, cap retention
+Cost-budget pattern stays on the v1 line. (The v2.0.0/v2.1.0 tags were
+withdrawn — fortify's module path is `go.klarlabs.de/fortify`, which Go
+requires to remain on the v1 major; v2 tags were not `go get`-able.)
 
-### Chore
+### Added
 
-- Update coverage badge [skip ci]
-- Update coverage badge [skip ci]
+- **Cost budget** — `fortify.New[T]().WithCostBudget(CostBudgetConfig{MaxCost, CostFunc, ResetAfter})` plus `fortify.ErrBudgetExceeded`: the spec's public cost-budget surface, a thin wrapper over the `budget` package. `ResetAfter` adds a rolling time-window auto-reset and a public injectable `Clock`. The root `Composer` also delegates the full pattern set (circuit breaker, retry, timeout, bulkhead, rate limit, …) so it is not a dead end.
 
-### Dependencies
+### Fixed
 
-- **deps:** Bump pymdown-extensions 10.16.1 → 10.21.3
+- Money conversion guards NaN/Inf/overflow; `WithCostBudget` panics on an invalid `MaxCost` instead of silently disabling the spend cap.
+- `ResetAfter` reset is now atomic under concurrent `Execute` (windowed budget state serialized).
 
-## [Unreleased]
+### CI / Chore
+
+- Adopt the shared reusable Go CI workflow; enable nox taint-analysis SAST; coverage-badge + dependency housekeeping.
 
 ## [1.5.0] - 2026-05-12
 
