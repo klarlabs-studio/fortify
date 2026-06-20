@@ -153,6 +153,31 @@
 //	    return apiClient.Call(ctx)
 //	})
 //
+// # Cost Budgets
+//
+// For operations whose cost cannot be capped by attempt count alone
+// (LLM calls, paid APIs), the top-level composer offers a monetary cost
+// budget. Costs are expressed in US dollars; ResetAfter optionally turns
+// the ceiling into a rolling time window.
+//
+//	out, err := fortify.New[Response]().
+//	    WithCostBudget(fortify.CostBudgetConfig{
+//	        MaxCost:    5.00, // $5 ceiling
+//	        ResetAfter: time.Hour,
+//	        CostFunc: func(result any, _ error) float64 {
+//	            return result.(Response).USDCost
+//	        },
+//	    }).
+//	    Execute(ctx, callProvider)
+//
+//	if errors.Is(err, fortify.ErrBudgetExceeded) {
+//	    // ceiling reached; operation refused
+//	}
+//
+// For token or call-count ceilings, OnExceeded callbacks, or sharing one
+// budget across chains, use the budget package with
+// middleware.Chain.WithBudget directly.
+//
 // # HTTP Integration
 //
 // Use resilience patterns as HTTP middleware:

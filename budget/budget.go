@@ -12,6 +12,10 @@
 //   - USDMicros (1_000_000 = $1; integer to avoid float drift).
 //   - Calls (incremented automatically; Charge cannot affect it).
 //
+// Budgets may be capped indefinitely (manual Reset) or over a rolling
+// time window via Config.ResetAfter, which auto-clears the accumulated
+// cost once the window elapses.
+//
 // Sensitive payloads: budget never inspects the operation result or
 // error contents beyond what Charge returns. Charge must not return
 // content fields it does not want surfaced via OnExceeded.
@@ -32,7 +36,9 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"sync"
 	"sync/atomic"
+	"time"
 )
 
 // ErrBudgetExceeded is the sentinel returned (wrapped by *BudgetExceededError)
@@ -81,20 +87,54 @@ type Config[T any] struct {
 	// keep it short. Panics are recovered and logged via Logger.
 	OnExceeded func(consumed Cost)
 
+	// ResetAfter, when positive, enables a rolling time window: the
+	// accumulated cost (and any breach) is automatically cleared once this
+	// much wall-clock time has elapsed since the window opened. The window
+	// opens on the first Execute and reopens on each auto-reset. A
+	// non-positive value (the default) disables auto-reset; callers must
+	// then drive Reset manually.
+	ResetAfter time.Duration
+
+	// Clock supplies the current time for ResetAfter windowing. Nil
+	// defaults to time.Now. Override it to drive the rolling window from
+	// a deterministic or virtualized clock (tests, simulations).
+	Clock func() time.Time
+
 	// Logger receives diagnostic warnings (callback panics, breach
 	// notices). Nil disables internal logging.
 	Logger *slog.Logger
 }
 
 // Budget enforces a Config across one or more Execute calls. Budgets
-// are safe for concurrent use; the aggregate cost is accumulated with
-// atomic operations.
+// are safe for concurrent use.
+//
+// Two storage modes share the same atomic counters:
+//
+//   - ResetAfter <= 0 (no window): the lock-free fast path. Counters are
+//     mutated with bare atomic operations; windowMu is never taken.
+//   - ResetAfter > 0 (rolling window): the windowed path. Every mutation of
+//     the counters — the auto-reset and the per-Execute charge/breach
+//     read-modify-write — is serialized under windowMu so a window reset can
+//     never interleave with (and clobber) a concurrent charge. The atomics are
+//     still the backing store, which keeps Consumed() and the breach fast-path
+//     check lock-free for readers.
 type Budget[T any] struct {
 	cfg       Config[T]
 	tokens    atomic.Int64
 	usdMicros atomic.Int64
 	calls     atomic.Int64
 	breached  atomic.Bool
+
+	// now is the clock source; overridable in tests for deterministic
+	// ResetAfter behaviour. Defaults to time.Now.
+	now func() time.Time
+
+	// windowMu serializes the rolling-window bookkeeping AND the windowed
+	// charge/breach sequence for ResetAfter. It is only taken when ResetAfter
+	// is configured; the lock is otherwise uncontended (never acquired).
+	windowMu    sync.Mutex
+	windowStart time.Time
+	windowOpen  bool
 }
 
 // New constructs a Budget. Returns an error if Max is entirely zero
@@ -104,7 +144,11 @@ func New[T any](cfg Config[T]) (*Budget[T], error) {
 	if cfg.Max.Tokens <= 0 && cfg.Max.USDMicros <= 0 && cfg.Max.Calls <= 0 {
 		return nil, errors.New("budget.New: at least one Max field must be positive")
 	}
-	return &Budget[T]{cfg: cfg}, nil
+	clock := cfg.Clock
+	if clock == nil {
+		clock = time.Now
+	}
+	return &Budget[T]{cfg: cfg, now: clock}, nil
 }
 
 // Execute runs fn, charges the resulting cost against the budget, and
@@ -115,6 +159,15 @@ func New[T any](cfg Config[T]) (*Budget[T], error) {
 // If the budget was already exceeded before this call, fn is not run
 // and *BudgetExceededError is returned immediately.
 func (b *Budget[T]) Execute(ctx context.Context, fn func(context.Context) (T, error)) (T, error) {
+	if b.cfg.ResetAfter > 0 {
+		return b.executeWindowed(ctx, fn)
+	}
+	return b.executeLockFree(ctx, fn)
+}
+
+// executeLockFree is the no-window fast path (ResetAfter <= 0). It mutates the
+// atomic counters without ever taking windowMu.
+func (b *Budget[T]) executeLockFree(ctx context.Context, fn func(context.Context) (T, error)) (T, error) {
 	var zero T
 
 	if b.breached.Load() {
@@ -149,6 +202,70 @@ func (b *Budget[T]) Execute(ctx context.Context, fn func(context.Context) (T, er
 	return result, err
 }
 
+// executeWindowed is the rolling-window path (ResetAfter > 0). The auto-reset
+// and the charge/breach read-modify-write are guarded by the same windowMu so a
+// window boundary can never interleave with a charge: a reset cannot clobber a
+// concurrent Add, and no reader inside the critical section observes a
+// half-reset state. fn itself runs OUTSIDE the lock so a slow operation does not
+// serialize the whole budget; only the cheap bookkeeping before and after fn is
+// guarded.
+func (b *Budget[T]) executeWindowed(ctx context.Context, fn func(context.Context) (T, error)) (T, error) {
+	var zero T
+
+	// Reset (if the window elapsed) and the pre-charge happen atomically.
+	b.windowMu.Lock()
+	b.autoResetLocked()
+
+	if b.breached.Load() {
+		err := b.exceededError(b.snapshot())
+		b.windowMu.Unlock()
+		return zero, err
+	}
+
+	calls := b.calls.Add(1)
+	if b.cfg.Max.Calls > 0 && calls > b.cfg.Max.Calls {
+		fireCost, fire := b.markBreachLocked()
+		err := b.exceededError(b.snapshot())
+		b.windowMu.Unlock()
+		if fire {
+			b.fireOnExceeded(fireCost)
+		}
+		return zero, err
+	}
+	b.windowMu.Unlock()
+
+	// Run the operation without holding the lock.
+	result, err := fn(ctx)
+
+	// Charge + breach evaluation atomically w.r.t. a concurrent reset.
+	b.windowMu.Lock()
+	if b.cfg.Charge != nil {
+		c := b.cfg.Charge(ctx, result, err)
+		if c.Tokens > 0 {
+			b.tokens.Add(c.Tokens)
+		}
+		if c.USDMicros > 0 {
+			b.usdMicros.Add(c.USDMicros)
+		}
+	}
+	consumed := b.snapshot()
+	over := b.over(consumed)
+	var fireCost Cost
+	var fire bool
+	if over {
+		fireCost, fire = b.markBreachLocked()
+	}
+	b.windowMu.Unlock()
+
+	if fire {
+		b.fireOnExceeded(fireCost)
+	}
+	if over {
+		return result, b.exceededError(consumed)
+	}
+	return result, err
+}
+
 // Consumed returns the current aggregate cost. Snapshot semantics: the
 // fields are read independently and so may not be perfectly consistent
 // under heavy concurrent contention, but each field is monotonic.
@@ -157,8 +274,52 @@ func (b *Budget[T]) Consumed() Cost {
 }
 
 // Reset clears the accumulated cost and re-arms OnExceeded. Useful for
-// per-request budgets reused across handlers.
+// per-request budgets reused across handlers. Reset also closes any open
+// rolling window; the next Execute reopens it (for ResetAfter budgets).
 func (b *Budget[T]) Reset() {
+	// For windowed budgets, clear the counters under windowMu so a manual Reset
+	// is atomic w.r.t. a concurrent windowed Execute (same invariant as the
+	// auto-reset). The no-window path stays lock-free.
+	if b.cfg.ResetAfter > 0 {
+		b.windowMu.Lock()
+		b.tokens.Store(0)
+		b.usdMicros.Store(0)
+		b.calls.Store(0)
+		b.breached.Store(false)
+		b.windowOpen = false
+		b.windowMu.Unlock()
+		return
+	}
+
+	b.tokens.Store(0)
+	b.usdMicros.Store(0)
+	b.calls.Store(0)
+	b.breached.Store(false)
+}
+
+// autoResetLocked clears the accumulated cost when the configured ResetAfter
+// window has elapsed since it opened, then reopens the window. The window opens
+// lazily on the first call. The window is wall-clock and ctx-independent: it is
+// driven solely by Config.Clock (or time.Now) and is unaffected by context
+// deadlines or cancellation.
+//
+// The caller MUST hold windowMu. The four atomic Stores happen inside this
+// critical section so a reset is atomic w.r.t. the windowed charge/breach
+// sequence in executeWindowed — no concurrent Add can be lost and no reader
+// inside the section observes a half-reset state.
+func (b *Budget[T]) autoResetLocked() {
+	now := b.now()
+
+	if !b.windowOpen {
+		b.windowStart = now
+		b.windowOpen = true
+		return
+	}
+	if now.Sub(b.windowStart) < b.cfg.ResetAfter {
+		return
+	}
+	// Window elapsed: open a fresh one and clear the accumulated cost atomically.
+	b.windowStart = now
 	b.tokens.Store(0)
 	b.usdMicros.Store(0)
 	b.calls.Store(0)
@@ -186,11 +347,33 @@ func (b *Budget[T]) over(c Cost) bool {
 	return false
 }
 
+// markBreach flips the breached flag and fires OnExceeded once. Used on the
+// lock-free (no-window) path.
 func (b *Budget[T]) markBreach() {
 	if b.breached.CompareAndSwap(false, true) {
 		if b.cfg.OnExceeded != nil {
 			b.safeCallback(b.cfg.OnExceeded, b.snapshot())
 		}
+	}
+}
+
+// markBreachLocked flips the breached flag under windowMu but does NOT run the
+// OnExceeded callback while holding the lock (user code must not be able to
+// deadlock by re-entering Execute, nor stall every other goroutine on the
+// budget). If this call won the CAS and a callback is configured, it returns the
+// snapshot to fire; the caller must invoke fireOnExceeded after releasing the
+// lock. A zero/false return means nothing to fire.
+func (b *Budget[T]) markBreachLocked() (Cost, bool) {
+	if b.breached.CompareAndSwap(false, true) && b.cfg.OnExceeded != nil {
+		return b.snapshot(), true
+	}
+	return Cost{}, false
+}
+
+// fireOnExceeded runs the OnExceeded callback. Call it OUTSIDE windowMu.
+func (b *Budget[T]) fireOnExceeded(c Cost) {
+	if b.cfg.OnExceeded != nil {
+		b.safeCallback(b.cfg.OnExceeded, c)
 	}
 }
 
