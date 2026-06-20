@@ -8,6 +8,7 @@ import (
 
 	"go.klarlabs.de/fortify/bulkhead"
 	"go.klarlabs.de/fortify/circuitbreaker"
+	"go.klarlabs.de/fortify/fallback"
 	"go.klarlabs.de/fortify/ratelimit"
 	"go.klarlabs.de/fortify/retry"
 	"go.klarlabs.de/fortify/timeout"
@@ -156,4 +157,24 @@ func TestChainErrorPropagation(t *testing.T) {
 			t.Errorf("error = %v, want %v", err, expectedErr)
 		}
 	})
+}
+
+func TestChainWithFallback(t *testing.T) {
+	fb := fallback.New[string](fallback.Config[string]{
+		Fallback: func(context.Context, error) (string, error) {
+			return "recovered", nil
+		},
+	})
+
+	chain := New[string]().WithFallback(fb)
+
+	out, err := chain.Execute(context.Background(), func(context.Context) (string, error) {
+		return "", errors.New("boom")
+	})
+	if err != nil {
+		t.Fatalf("expected fallback to recover, got %v", err)
+	}
+	if out != "recovered" {
+		t.Errorf("out = %q, want \"recovered\"", out)
+	}
 }

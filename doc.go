@@ -237,6 +237,11 @@
 //	collector := metrics.NewCollector()
 //	prometheus.MustRegister(collector)
 //
+//	// OpenTelemetry metrics (counters, histograms, gauges)
+//	import fortifyotelmetrics "go.klarlabs.de/fortify/metrics/otel"
+//	m, _ := fortifyotelmetrics.NewMeter(meterProvider) // nil = global provider
+//	m.RecordRetryDuration("planner", elapsed.Seconds())
+//
 // # Package Organization
 //
 // Core Patterns:
@@ -255,7 +260,8 @@
 //   - middleware: Composable middleware chains
 //
 // Observability:
-//   - otel: OpenTelemetry tracing integration
+//   - otel: OpenTelemetry tracing integration (spans)
+//   - metrics/otel: OpenTelemetry metrics adapter (counters, histograms, gauges)
 //   - slog: Structured logging handlers
 //   - metrics: Prometheus metrics exporters
 //

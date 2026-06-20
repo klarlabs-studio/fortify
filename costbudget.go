@@ -10,6 +10,7 @@ import (
 	"go.klarlabs.de/fortify/budget"
 	"go.klarlabs.de/fortify/bulkhead"
 	"go.klarlabs.de/fortify/circuitbreaker"
+	"go.klarlabs.de/fortify/fallback"
 	"go.klarlabs.de/fortify/hedge"
 	"go.klarlabs.de/fortify/middleware"
 	"go.klarlabs.de/fortify/ratelimit"
@@ -176,6 +177,14 @@ func (c *Composer[T]) WithAdaptive(a adaptive.Limiter[T]) *Composer[T] {
 // WithHedge delegates to middleware.Chain.WithHedge.
 func (c *Composer[T]) WithHedge(h hedge.Hedge[T]) *Composer[T] {
 	c.chain.WithHedge(h)
+	return c
+}
+
+// WithFallback delegates to middleware.Chain.WithFallback. Add it first
+// (outermost) so the fallback can recover from failures produced by any inner
+// pattern, supplying a default once the rest of the pipeline has given up.
+func (c *Composer[T]) WithFallback(fb fallback.Fallback[T]) *Composer[T] {
+	c.chain.WithFallback(fb)
 	return c
 }
 

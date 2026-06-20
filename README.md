@@ -133,7 +133,7 @@ Order matters. Outer-to-inner: `Bulkhead → RateLimit → Timeout → CircuitBr
 
 - HTTP middleware (`fortify/http`): `RateLimit`, `Timeout`, `CircuitBreaker` decorators
 - gRPC interceptors (`fortify/grpc`): unary + streaming
-- OpenTelemetry tracing (`fortify/otel`)
+- OpenTelemetry tracing (`fortify/otel`) and metrics (`fortify/metrics/otel`)
 - Prometheus metrics (`fortify/metrics`)
 - Structured logging (`fortify/slog`)
 - Chaos testing (`fortify/testing`)

@@ -26,6 +26,7 @@ import (
 	"go.klarlabs.de/fortify/budget"
 	"go.klarlabs.de/fortify/bulkhead"
 	"go.klarlabs.de/fortify/circuitbreaker"
+	"go.klarlabs.de/fortify/fallback"
 	"go.klarlabs.de/fortify/hedge"
 	"go.klarlabs.de/fortify/ratelimit"
 	"go.klarlabs.de/fortify/retry"
@@ -149,6 +150,23 @@ func (c *Chain[T]) WithHedge(h hedge.Hedge[T]) *Chain[T] {
 	middleware := func(next func(context.Context) (T, error)) func(context.Context) (T, error) {
 		return func(ctx context.Context) (T, error) {
 			return h.Execute(ctx, next)
+		}
+	}
+	c.middlewares = append(c.middlewares, middleware)
+	return c
+}
+
+// WithFallback adds a fallback to the middleware chain. Place it outermost
+// (i.e., add it first) so it can recover from failures produced by any of the
+// inner patterns — once retries, the circuit breaker, and timeout have all
+// given up, the fallback supplies a default value.
+//
+// Use only when a sensible default exists for the operation; the fallback's
+// handler receives the final error from the wrapped pipeline.
+func (c *Chain[T]) WithFallback(fb fallback.Fallback[T]) *Chain[T] {
+	middleware := func(next func(context.Context) (T, error)) func(context.Context) (T, error) {
+		return func(ctx context.Context) (T, error) {
+			return fb.Execute(ctx, next)
 		}
 	}
 	c.middlewares = append(c.middlewares, middleware)
