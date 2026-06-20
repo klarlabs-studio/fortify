@@ -246,6 +246,138 @@ func TestResetAfter_ZeroDisablesAutoReset(t *testing.T) {
 	}
 }
 
+// TestResetAfter_ConcurrentExecuteRaces hammers Execute from many goroutines
+// while the clock is advanced across the ResetAfter window boundary, under
+// -race. It guards the money-safety invariant that a window auto-reset never
+// interleaves with (and clobbers) a concurrent charge.
+//
+// Detector: the Charge callback returns Tokens and USDMicros that are ALWAYS
+// equal (both = 1 here). In the windowed Execute path both are applied together
+// in the same windowMu critical section, and the auto-reset clears all counters
+// in (with the fix) the same critical section. Therefore any snapshot taken
+// while holding windowMu must observe Tokens == USDMicros — they are written and
+// cleared as one atomic unit relative to the lock.
+//
+// With the bug the reset's tokens.Store(0) and usdMicros.Store(0) run OUTSIDE
+// windowMu, so a windowMu-guarded reader can catch the gap between the two
+// Stores, or a concurrent charge can land a tokens.Add that the reset clobbers
+// while leaving usdMicros (or vice-versa) — Tokens and USDMicros drift apart and
+// never re-converge. Unlike the public lock-free Consumed(), a windowMu-guarded
+// read is immune to benign torn reads, so a non-zero |Tokens-USDMicros| under
+// the lock is a true lost-charge / torn-reset signal.
+//
+// (Tokens/USDMicros, not Calls: the pre-charge increments Calls in a separate
+// earlier critical section, so Calls legitimately leads the other two by the
+// number of in-flight operations. Tokens and USDMicros are the pair applied
+// atomically together.)
+func TestResetAfter_ConcurrentExecuteRaces(t *testing.T) {
+	var mu sync.Mutex
+	clock := time.Unix(0, 0)
+	advance := func(d time.Duration) {
+		mu.Lock()
+		clock = clock.Add(d)
+		mu.Unlock()
+	}
+	nowFn := func() time.Time {
+		mu.Lock()
+		defer mu.Unlock()
+		return clock
+	}
+
+	b, err := New[res](Config[res]{
+		// High caps so no goroutine trips the ceiling; we exercise the
+		// reset/charge race, not breach handling.
+		Max:        Cost{Tokens: 1_000_000_000, USDMicros: 1_000_000_000},
+		Charge:     func(_ context.Context, _ res, _ error) Cost { return Cost{Tokens: 1, USDMicros: 1} },
+		ResetAfter: time.Minute,
+		Clock:      nowFn,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ctx := context.Background()
+	const workers = 64
+
+	var helpers sync.WaitGroup
+	var work sync.WaitGroup
+	stop := make(chan struct{})
+	var torn atomic.Bool
+	var worstDiff atomic.Int64
+
+	// Clock driver: continuously push past the window boundary so resets fire
+	// concurrently with in-flight Execute calls.
+	helpers.Add(1)
+	go func() {
+		defer helpers.Done()
+		for {
+			select {
+			case <-stop:
+				return
+			default:
+				advance(time.Minute + time.Nanosecond)
+			}
+		}
+	}()
+
+	// Sampler: take a CONSISTENT snapshot under windowMu. Tokens and USDMicros
+	// are charged and reset together under the lock, so they must always match.
+	helpers.Add(1)
+	go func() {
+		defer helpers.Done()
+		for {
+			select {
+			case <-stop:
+				return
+			default:
+				b.windowMu.Lock()
+				tokens := b.tokens.Load()
+				usd := b.usdMicros.Load()
+				b.windowMu.Unlock()
+				diff := tokens - usd
+				if diff < 0 {
+					diff = -diff
+				}
+				for {
+					w := worstDiff.Load()
+					if diff <= w || worstDiff.CompareAndSwap(w, diff) {
+						break
+					}
+				}
+				if diff != 0 {
+					torn.Store(true)
+				}
+			}
+		}
+	}()
+
+	for i := 0; i < workers; i++ {
+		work.Add(1)
+		go func() {
+			defer work.Done()
+			for j := 0; j < 5_000; j++ {
+				_, _ = b.Execute(ctx, func(context.Context) (res, error) {
+					return res{}, nil
+				})
+			}
+		}()
+	}
+
+	work.Wait()    // all Execute hammering done
+	close(stop)    // release the clock driver and sampler
+	helpers.Wait() // and let them exit cleanly
+
+	if torn.Load() {
+		t.Fatalf("torn reset / lost charge: |Tokens-USDMicros| reached %d under windowMu (want 0)",
+			worstDiff.Load())
+	}
+
+	c := b.Consumed()
+	if c.Tokens < 0 || c.USDMicros < 0 || c.Calls < 0 {
+		t.Fatalf("impossible negative counters after concurrent run: %+v", c)
+	}
+}
+
 func TestBudgetExceededError_LogValue(t *testing.T) {
 	e := &BudgetExceededError{
 		Consumed: Cost{Tokens: 150, USDMicros: 2000, Calls: 5},
