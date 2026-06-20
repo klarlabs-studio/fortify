@@ -55,17 +55,11 @@ type CostBudgetConfig struct {
 	// independent of any ctx deadline or cancellation.
 	ResetAfter time.Duration
 
-	// clock overrides the time source for ResetAfter windowing. Unexported;
-	// set via WithClockForTest. Nil defaults to time.Now.
-	clock func() time.Time
-}
-
-// WithClockForTest returns a copy of the config with a custom clock used
-// to drive the ResetAfter window. It exists so callers (and tests) can
-// exercise auto-reset deterministically without sleeping.
-func (c CostBudgetConfig) WithClockForTest(now func() time.Time) CostBudgetConfig {
-	c.clock = now
-	return c
+	// Clock supplies the current time for ResetAfter windowing. Nil defaults
+	// to time.Now. Override it to drive the rolling window from a
+	// deterministic or virtualized clock (tests, simulations). Mirrors
+	// budget.Config.Clock.
+	Clock func() time.Time
 }
 
 // Composer is the fluent entry point for assembling a resilience pipeline
@@ -118,7 +112,7 @@ func (c *Composer[T]) WithCostBudget(cfg CostBudgetConfig) *Composer[T] {
 		Max:        budget.Cost{USDMicros: micros},
 		Charge:     costFuncToCharge[T](cfg.CostFunc),
 		ResetAfter: cfg.ResetAfter,
-		Clock:      cfg.clock,
+		Clock:      cfg.Clock,
 	})
 	if err != nil {
 		// usdToMicros already guaranteed a positive USDMicros, so budget.New

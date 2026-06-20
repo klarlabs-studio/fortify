@@ -80,11 +80,14 @@ func TestWithCostBudget_CostFuncSeesResultAndError(t *testing.T) {
 
 func TestWithCostBudget_ResetAfterAutoResets(t *testing.T) {
 	clock := time.Unix(0, 0)
+	// Clock is a public config field (mirroring budget.Config.Clock); it drives
+	// the ResetAfter window deterministically without sleeping.
 	chain := fortify.New[string]().WithCostBudget(fortify.CostBudgetConfig{
 		MaxCost:    1.0,
 		CostFunc:   func(any, error) float64 { return 0.75 },
 		ResetAfter: time.Minute,
-	}.WithClockForTest(func() time.Time { return clock }))
+		Clock:      func() time.Time { return clock },
+	})
 
 	ctx := context.Background()
 
