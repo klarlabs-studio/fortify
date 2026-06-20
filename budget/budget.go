@@ -12,6 +12,10 @@
 //   - USDMicros (1_000_000 = $1; integer to avoid float drift).
 //   - Calls (incremented automatically; Charge cannot affect it).
 //
+// Budgets may be capped indefinitely (manual Reset) or over a rolling
+// time window via Config.ResetAfter, which auto-clears the accumulated
+// cost once the window elapses.
+//
 // Sensitive payloads: budget never inspects the operation result or
 // error contents beyond what Charge returns. Charge must not return
 // content fields it does not want surfaced via OnExceeded.
@@ -32,7 +36,9 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"sync"
 	"sync/atomic"
+	"time"
 )
 
 // ErrBudgetExceeded is the sentinel returned (wrapped by *BudgetExceededError)
@@ -81,6 +87,14 @@ type Config[T any] struct {
 	// keep it short. Panics are recovered and logged via Logger.
 	OnExceeded func(consumed Cost)
 
+	// ResetAfter, when positive, enables a rolling time window: the
+	// accumulated cost (and any breach) is automatically cleared once this
+	// much wall-clock time has elapsed since the window opened. The window
+	// opens on the first Execute and reopens on each auto-reset. A
+	// non-positive value (the default) disables auto-reset; callers must
+	// then drive Reset manually.
+	ResetAfter time.Duration
+
 	// Logger receives diagnostic warnings (callback panics, breach
 	// notices). Nil disables internal logging.
 	Logger *slog.Logger
@@ -95,6 +109,16 @@ type Budget[T any] struct {
 	usdMicros atomic.Int64
 	calls     atomic.Int64
 	breached  atomic.Bool
+
+	// now is the clock source; overridable in tests for deterministic
+	// ResetAfter behaviour. Defaults to time.Now.
+	now func() time.Time
+
+	// windowMu guards the rolling-window bookkeeping for ResetAfter.
+	// It is only contended when ResetAfter is configured.
+	windowMu    sync.Mutex
+	windowStart time.Time
+	windowOpen  bool
 }
 
 // New constructs a Budget. Returns an error if Max is entirely zero
@@ -104,7 +128,7 @@ func New[T any](cfg Config[T]) (*Budget[T], error) {
 	if cfg.Max.Tokens <= 0 && cfg.Max.USDMicros <= 0 && cfg.Max.Calls <= 0 {
 		return nil, errors.New("budget.New: at least one Max field must be positive")
 	}
-	return &Budget[T]{cfg: cfg}, nil
+	return &Budget[T]{cfg: cfg, now: time.Now}, nil
 }
 
 // Execute runs fn, charges the resulting cost against the budget, and
@@ -116,6 +140,8 @@ func New[T any](cfg Config[T]) (*Budget[T], error) {
 // and *BudgetExceededError is returned immediately.
 func (b *Budget[T]) Execute(ctx context.Context, fn func(context.Context) (T, error)) (T, error) {
 	var zero T
+
+	b.maybeAutoReset()
 
 	if b.breached.Load() {
 		return zero, b.exceededError(b.snapshot())
@@ -157,8 +183,46 @@ func (b *Budget[T]) Consumed() Cost {
 }
 
 // Reset clears the accumulated cost and re-arms OnExceeded. Useful for
-// per-request budgets reused across handlers.
+// per-request budgets reused across handlers. Reset also closes any open
+// rolling window; the next Execute reopens it (for ResetAfter budgets).
 func (b *Budget[T]) Reset() {
+	b.tokens.Store(0)
+	b.usdMicros.Store(0)
+	b.calls.Store(0)
+	b.breached.Store(false)
+
+	if b.cfg.ResetAfter > 0 {
+		b.windowMu.Lock()
+		b.windowOpen = false
+		b.windowMu.Unlock()
+	}
+}
+
+// maybeAutoReset clears the accumulated cost when the configured ResetAfter
+// window has elapsed since it opened, then reopens the window. It is a no-op
+// when ResetAfter is non-positive. The window opens lazily on the first call.
+func (b *Budget[T]) maybeAutoReset() {
+	if b.cfg.ResetAfter <= 0 {
+		return
+	}
+
+	now := b.now()
+
+	b.windowMu.Lock()
+	if !b.windowOpen {
+		b.windowStart = now
+		b.windowOpen = true
+		b.windowMu.Unlock()
+		return
+	}
+	if now.Sub(b.windowStart) < b.cfg.ResetAfter {
+		b.windowMu.Unlock()
+		return
+	}
+	// Window elapsed: open a fresh one and clear the accumulated cost.
+	b.windowStart = now
+	b.windowMu.Unlock()
+
 	b.tokens.Store(0)
 	b.usdMicros.Store(0)
 	b.calls.Store(0)

@@ -7,6 +7,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"testing"
+	"time"
 )
 
 type res struct{ tokens int64 }
@@ -172,6 +173,78 @@ func TestReset(t *testing.T) {
 	b.Reset()
 	if _, err := b.Execute(ctx, func(context.Context) (res, error) { return res{}, nil }); err != nil {
 		t.Errorf("after reset: %v", err)
+	}
+}
+
+func TestResetAfter_AutoResetsOnceWindowElapses(t *testing.T) {
+	b, err := New[res](Config[res]{
+		Max:        Cost{Calls: 1},
+		ResetAfter: time.Minute,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	clock := time.Unix(0, 0)
+	b.now = func() time.Time { return clock }
+
+	ctx := context.Background()
+
+	// First call consumes the only allowed call.
+	if _, err := b.Execute(ctx, func(context.Context) (res, error) { return res{}, nil }); err != nil {
+		t.Fatalf("first call: %v", err)
+	}
+	// Second call within the window breaches.
+	if _, err := b.Execute(ctx, func(context.Context) (res, error) { return res{}, nil }); !errors.Is(err, ErrBudgetExceeded) {
+		t.Fatalf("expected breach within window, got %v", err)
+	}
+
+	// Advance time past the reset window; the next Execute should auto-reset.
+	clock = clock.Add(time.Minute + time.Nanosecond)
+	if _, err := b.Execute(ctx, func(context.Context) (res, error) { return res{}, nil }); err != nil {
+		t.Fatalf("expected auto-reset to clear budget, got %v", err)
+	}
+	if c := b.Consumed(); c.Calls != 1 {
+		t.Errorf("after auto-reset Calls = %d, want 1", c.Calls)
+	}
+}
+
+func TestResetAfter_DoesNotResetBeforeWindow(t *testing.T) {
+	b, _ := New[res](Config[res]{
+		Max:        Cost{Calls: 2},
+		ResetAfter: time.Minute,
+	})
+
+	clock := time.Unix(0, 0)
+	b.now = func() time.Time { return clock }
+
+	ctx := context.Background()
+	for i := 0; i < 2; i++ {
+		if _, err := b.Execute(ctx, func(context.Context) (res, error) { return res{}, nil }); err != nil {
+			t.Fatalf("call %d: %v", i, err)
+		}
+		clock = clock.Add(10 * time.Second) // still inside the window
+	}
+	// Third call, total elapsed 20s < 1m, must breach (no reset yet).
+	if _, err := b.Execute(ctx, func(context.Context) (res, error) { return res{}, nil }); !errors.Is(err, ErrBudgetExceeded) {
+		t.Fatalf("expected breach before window elapsed, got %v", err)
+	}
+}
+
+func TestResetAfter_ZeroDisablesAutoReset(t *testing.T) {
+	b, _ := New[res](Config[res]{
+		Max: Cost{Calls: 1},
+	})
+	clock := time.Unix(0, 0)
+	b.now = func() time.Time { return clock }
+
+	ctx := context.Background()
+	_, _ = b.Execute(ctx, func(context.Context) (res, error) { return res{}, nil })
+
+	// Even far in the future, with ResetAfter unset the budget stays breached.
+	clock = clock.Add(24 * time.Hour)
+	if _, err := b.Execute(ctx, func(context.Context) (res, error) { return res{}, nil }); !errors.Is(err, ErrBudgetExceeded) {
+		t.Fatalf("expected sustained breach with ResetAfter=0, got %v", err)
 	}
 }
 
