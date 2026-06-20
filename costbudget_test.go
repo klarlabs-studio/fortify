@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"go.klarlabs.de/fortify"
+	"go.klarlabs.de/fortify/retry"
+	"go.klarlabs.de/fortify/timeout"
 )
 
 func TestWithCostBudget_AccumulatesUntilExceeded(t *testing.T) {
@@ -168,6 +170,39 @@ func TestWithCostBudget_CostFuncNaNInfOverflowChargesNothing(t *testing.T) {
 				t.Fatalf("bad cost %v call %d: unexpected breach: %v", bad, i, err)
 			}
 		}
+	}
+}
+
+func TestComposer_DelegatesChainPatterns(t *testing.T) {
+	// The curated Composer must not be a WithCostBudget-only dead end: it
+	// exposes the other chain patterns by delegating to the embedded chain.
+	rt := retry.New[string](retry.Config{MaxAttempts: 3, InitialDelay: time.Microsecond})
+	tm := timeout.New[string](timeout.Config{})
+
+	attempts := 0
+	chain := fortify.New[string]().
+		WithRetry(rt).
+		WithTimeout(tm, time.Second).
+		WithCostBudget(fortify.CostBudgetConfig{
+			MaxCost:  100.0,
+			CostFunc: func(any, error) float64 { return 1.0 },
+		})
+
+	out, err := chain.Execute(context.Background(), func(context.Context) (string, error) {
+		attempts++
+		if attempts < 2 {
+			return "", errors.New("transient")
+		}
+		return "ok", nil
+	})
+	if err != nil {
+		t.Fatalf("delegated chain Execute err: %v", err)
+	}
+	if out != "ok" {
+		t.Errorf("out = %q, want \"ok\"", out)
+	}
+	if attempts != 2 {
+		t.Errorf("attempts = %d, want 2 (retry delegated)", attempts)
 	}
 }
 

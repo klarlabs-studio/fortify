@@ -6,8 +6,15 @@ import (
 	"math"
 	"time"
 
+	"go.klarlabs.de/fortify/adaptive"
 	"go.klarlabs.de/fortify/budget"
+	"go.klarlabs.de/fortify/bulkhead"
+	"go.klarlabs.de/fortify/circuitbreaker"
+	"go.klarlabs.de/fortify/hedge"
 	"go.klarlabs.de/fortify/middleware"
+	"go.klarlabs.de/fortify/ratelimit"
+	"go.klarlabs.de/fortify/retry"
+	"go.klarlabs.de/fortify/timeout"
 )
 
 // ErrBudgetExceeded is returned (wrapped) by a chain carrying a cost
@@ -62,10 +69,15 @@ type CostBudgetConfig struct {
 	Clock func() time.Time
 }
 
-// Composer is the fluent entry point for assembling a resilience pipeline
-// from the top-level fortify package. It wraps the middleware.Chain
-// composer so spec-level convenience methods (WithCostBudget) and the
-// lower-level pattern wiring share one execution model.
+// Composer is the curated, fluent entry point for assembling a resilience
+// pipeline from the top-level fortify package. It wraps middleware.Chain and
+// re-exposes its pattern builders so the curated surface is not a dead end,
+// while adding the spec-level convenience method WithCostBudget.
+//
+// Composer covers the common patterns. For the full toolkit (WithAdaptive,
+// WithHedge, custom ordering, or sharing one pattern instance across chains)
+// drop down to middleware.Chain directly; Composer is a thin delegating
+// wrapper over it.
 //
 // Build a Composer with New, attach policies, then call Execute.
 type Composer[T any] struct {
@@ -121,6 +133,49 @@ func (c *Composer[T]) WithCostBudget(cfg CostBudgetConfig) *Composer[T] {
 		panic(fmt.Sprintf("fortify.WithCostBudget: %v", err))
 	}
 	c.chain.WithBudget(b)
+	return c
+}
+
+// WithCircuitBreaker delegates to middleware.Chain.WithCircuitBreaker.
+func (c *Composer[T]) WithCircuitBreaker(cb circuitbreaker.CircuitBreaker[T]) *Composer[T] {
+	c.chain.WithCircuitBreaker(cb)
+	return c
+}
+
+// WithRetry delegates to middleware.Chain.WithRetry.
+func (c *Composer[T]) WithRetry(r retry.Retry[T]) *Composer[T] {
+	c.chain.WithRetry(r)
+	return c
+}
+
+// WithRateLimit delegates to middleware.Chain.WithRateLimit. The key
+// identifies the rate-limit bucket (e.g. user ID, IP address).
+func (c *Composer[T]) WithRateLimit(rl ratelimit.RateLimiter, key string) *Composer[T] {
+	c.chain.WithRateLimit(rl, key)
+	return c
+}
+
+// WithTimeout delegates to middleware.Chain.WithTimeout.
+func (c *Composer[T]) WithTimeout(tm timeout.Timeout[T], duration time.Duration) *Composer[T] {
+	c.chain.WithTimeout(tm, duration)
+	return c
+}
+
+// WithBulkhead delegates to middleware.Chain.WithBulkhead.
+func (c *Composer[T]) WithBulkhead(bh bulkhead.Bulkhead[T]) *Composer[T] {
+	c.chain.WithBulkhead(bh)
+	return c
+}
+
+// WithAdaptive delegates to middleware.Chain.WithAdaptive.
+func (c *Composer[T]) WithAdaptive(a adaptive.Limiter[T]) *Composer[T] {
+	c.chain.WithAdaptive(a)
+	return c
+}
+
+// WithHedge delegates to middleware.Chain.WithHedge.
+func (c *Composer[T]) WithHedge(h hedge.Hedge[T]) *Composer[T] {
+	c.chain.WithHedge(h)
 	return c
 }
 
