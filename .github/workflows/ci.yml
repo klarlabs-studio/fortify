@@ -1,7 +1,6 @@
 # Thin caller for the shared klarlabs-studio Go CI bar.
 # All gate logic lives in the reusable workflow — bump versions / add jobs
-# there, once, org-wide. fortify is perf-sensitive and validates multi-OS on
-# push to main, so coverage, benchmark, and cross-platform are all enabled.
+# there, once, org-wide.
 name: CI
 
 on:
@@ -32,5 +31,13 @@ jobs:
     secrets: inherit
     with:
       coverage: true
-      benchmark: true
-      cross-platform: true
+      # cross-platform OFF: fortify is pure-Go resilience code with no
+      # OS-specific paths/syscalls/build-tags, so a macOS (10x billing) +
+      # Windows matrix on every push to main validated nothing — Go's own
+      # runtime guarantees identical behaviour. This was the bulk of the repo's
+      # Actions spend. Re-enable only if OS-specific source is ever added.
+      cross-platform: false
+      # benchmark OFF here: the dedicated weekly performance.yml already runs
+      # `go test -bench` with history comparison (gh-pages). Running it again on
+      # every push to main was redundant.
+      benchmark: false
