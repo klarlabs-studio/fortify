@@ -1099,6 +1099,54 @@
       "file_path": "http/middleware.go",
       "severity": "high",
       "created_at": "2026-05-12T00:00:00Z"
+    },
+    {
+      "fingerprint": "074c35467d55981e32dc54479ecce4e78dd90527b52c626292660add6a7dee0c",
+      "rule_id": "CONT-001",
+      "file_path": "examples/observability-demo/Dockerfile",
+      "severity": "medium",
+      "reason": "Pre-existing false-positive secret findings (example auth token in examples/http/main.go, Prometheus key in prometheus_test.go) adopted at the nox 1.7.1 upgrade; test/example fixtures, not live credentials.",
+      "created_at": "2026-07-06T11:40:41.690716Z"
+    },
+    {
+      "fingerprint": "2f102f76b36f6b8d7ba9f66af72977694a9f95b3bc3a241d5ac0f7d31bb2cf0e",
+      "rule_id": "CONT-001",
+      "file_path": "examples/observability-demo/Dockerfile",
+      "severity": "medium",
+      "reason": "Pre-existing false-positive secret findings (example auth token in examples/http/main.go, Prometheus key in prometheus_test.go) adopted at the nox 1.7.1 upgrade; test/example fixtures, not live credentials.",
+      "created_at": "2026-07-06T11:40:41.690716Z"
+    },
+    {
+      "fingerprint": "496ab46e57aa6f392acddf14487528f2db2aabfb16f171cbdd18c60b2b187b3a",
+      "rule_id": "DATA-005",
+      "file_path": "http/middleware_test.go",
+      "severity": "medium",
+      "reason": "Pre-existing false-positive secret findings (example auth token in examples/http/main.go, Prometheus key in prometheus_test.go) adopted at the nox 1.7.1 upgrade; test/example fixtures, not live credentials.",
+      "created_at": "2026-07-06T11:40:41.690716Z"
+    },
+    {
+      "fingerprint": "8d03b16d243807464bfd67a40acc3db3983693faadacf786f67c6a67011e30fd",
+      "rule_id": "SEC-163",
+      "file_path": "ratelimit/limiter_test.go",
+      "severity": "medium",
+      "reason": "Pre-existing false-positive secret findings (example auth token in examples/http/main.go, Prometheus key in prometheus_test.go) adopted at the nox 1.7.1 upgrade; test/example fixtures, not live credentials.",
+      "created_at": "2026-07-06T11:40:41.690716Z"
+    },
+    {
+      "fingerprint": "70d9b76bbf7d214d792b205888f44b277cb4420966e83d8c90adda237c2a8ef1",
+      "rule_id": "SEC-183",
+      "file_path": "examples/http/main.go",
+      "severity": "high",
+      "reason": "Pre-existing false-positive secret findings (example auth token in examples/http/main.go, Prometheus key in prometheus_test.go) adopted at the nox 1.7.1 upgrade; test/example fixtures, not live credentials.",
+      "created_at": "2026-07-06T11:40:41.690716Z"
+    },
+    {
+      "fingerprint": "715a07bd158ef27cf79c23bc72b71d7e78e9c50c5dfbeea22b630a445ebd2428",
+      "rule_id": "SEC-680",
+      "file_path": "metrics/prometheus_test.go",
+      "severity": "high",
+      "reason": "Pre-existing false-positive secret findings (example auth token in examples/http/main.go, Prometheus key in prometheus_test.go) adopted at the nox 1.7.1 upgrade; test/example fixtures, not live credentials.",
+      "created_at": "2026-07-06T11:40:41.690716Z"
     }
   ]
 }
