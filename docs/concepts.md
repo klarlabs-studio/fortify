@@ -74,9 +74,35 @@ In priority order:
 2. `Config.NonRetryableErrors` — match via `errors.Is`; if matched, do not retry.
 3. `Config.RetryableErrors` — match via `errors.Is`; if matched, retry; if list set but no match, do not retry.
 4. `ferrors.IsRetryable(err)` — implements the `RetryableError` interface.
-5. Default: retry all errors.
+5. `ferrors.ErrCircuitOpen` — **not** retried. An open circuit is a decision, not a transient failure.
+6. Default: retry all other errors.
 
 Wrap an error to mark it retryable: `ferrors.AsRetryable(err)`.
+
+### Why `ErrCircuitOpen` is excluded from the default
+
+A breaker that has tripped Open has already concluded the downstream must be
+left alone. Retrying its rejection multiplies load on the rejection path and
+multiplies the latency before the caller sees an error that was known at the
+first attempt — during the incident the breaker exists to contain. Polly names
+the same rule: never configure retry to catch `BrokenCircuitException`.
+
+This only bites when retry sits *outside* the breaker (see
+[composition](how-to-compose.md)); fortify's recommended layering puts retry
+inside, where `ErrCircuitOpen` never reaches it. The exclusion makes the
+inverted layering safe rather than silently wrong.
+
+`ferrors.ErrBulkheadFull` and `ferrors.ErrRateLimitExceeded` are deliberately
+*not* excluded — both describe a queue that drains on its own, so backing off
+and retrying stays a defensible policy. List them in `NonRetryableErrors` if
+your workload cannot wait.
+
+To retry an open circuit anyway, say so explicitly — rule 1, 3, or 4:
+
+```go
+retry.Config{IsRetryable: func(error) bool { return true }}
+retry.Config{RetryableErrors: []error{ferrors.ErrCircuitOpen}}
+```
 
 ### When **not** to retry
 

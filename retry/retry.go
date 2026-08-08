@@ -17,6 +17,14 @@
 //	user, err := r.Execute(ctx, func(ctx context.Context) (*User, error) {
 //	    return fetchUser(ctx, userID)
 //	})
+//
+// # Retryability
+//
+// With no classification configured, every error is retried except
+// ferrors.ErrCircuitOpen: an open circuit is a decision the breaker has
+// already made, not a transient failure, so retrying it only adds load
+// and latency to the rejection path. See Config for the full precedence
+// order and for how to opt back in.
 package retry
 
 import (
@@ -177,9 +185,25 @@ func (r *retry[T]) isRetryable(err error) bool {
 		return false
 	}
 
-	// Check if error implements RetryableError interface
+	// Check if error implements RetryableError interface.
+	// An explicit ferrors.AsRetryable marking is a deliberate caller
+	// signal, so it outranks the control-flow default below.
 	if ferrors.IsRetryable(err) {
 		return true
+	}
+
+	// Fortify's own control-flow rejections are decisions, not transient
+	// failures. An open circuit has already concluded the downstream must
+	// be left alone; retrying multiplies load on the rejection path and
+	// multiplies the latency before the caller sees an error that was
+	// known at the first attempt. Excluded from the permissive default so
+	// that composing retry outside a breaker is not a silent trap.
+	//
+	// Deliberately narrow: ErrBulkheadFull and ErrRateLimitExceeded are
+	// also rejections, but they describe a queue that drains on its own,
+	// so backing off and retrying remains a defensible policy.
+	if errors.Is(err, ferrors.ErrCircuitOpen) {
+		return false
 	}
 
 	// Default: retry all errors if no classification is configured
