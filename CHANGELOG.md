@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **13 MB of committed binaries no longer ship in the module.** `go build ./...` inside an example writes a binary named after its directory; those are extensionless, so none of `.gitignore`'s patterns (`*.exe`, `*.dll`, `*.so`, `*.dylib`, `*.test`) matched them, and five had been committed. Two — `examples/http/http` and `examples/composition/composition` — are inside the root module, so they went out in the module zip: measured against the published v1.8.1, **13 MB of a 16 MB download**, fetched by every consumer on every platform. `.gitignore` now excludes example build output by path rather than by extension.
+
+  The published zips still contain them; module versions are immutable.
+
 ### ⚠ Breaking
 
 - **`retry` no longer retries `ferrors.ErrCircuitOpen` on the default path.** An

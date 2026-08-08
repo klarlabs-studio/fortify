@@ -5,6 +5,23 @@
 *.so
 *.dylib
 
+# `go build ./...` inside an example writes a binary named after its
+# directory. Those are extensionless, so none of the patterns above match
+# them, and five had been committed. Two of them — examples/http/http and
+# examples/composition/composition — are inside the root module, so they
+# shipped in the module zip: 13 MB of a 16 MB download, on every `go get`.
+examples/*/*
+!examples/*/*.go
+!examples/*/*.md
+!examples/*/go.mod
+!examples/*/go.sum
+!examples/*/*.yaml
+!examples/*/*.yml
+!examples/*/*.json
+!examples/*/Dockerfile
+!examples/*/Makefile
+!examples/*/*/
+
 # Test binary, built with `go test -c`
 *.test
 
