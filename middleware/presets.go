@@ -18,6 +18,15 @@ import (
 // resilience shapes. They exist so you don't have to re-derive the same
 // chain on every call site. Prefer building your own Chain when the preset
 // doesn't fit; presets are starting points, not silver bullets.
+//
+// Every preset applies the layering documented in the package doc:
+// listed left to right, each arrow diagram below reads OUTERMOST to
+// innermost. In particular retry always sits INSIDE the circuit breaker,
+// so the breaker observes one outcome per logical call and a transient
+// failure that retry recovers from is recorded as a success — not as
+// MaxAttempts separate failures that could trip a healthy circuit. The
+// timeout is innermost, so it bounds each attempt rather than the whole
+// retry sequence.
 
 // HTTPClientConfig configures the HTTPClient preset.
 type HTTPClientConfig struct {
@@ -56,7 +65,7 @@ func (c *HTTPClientConfig) setDefaults() {
 
 // HTTPClient returns a preconfigured chain for outbound HTTP calls:
 //
-//	CircuitBreaker → Retry → Timeout → operation
+//	CircuitBreaker → Retry → Timeout → operation   (outermost → innermost)
 //
 // The breaker trips after CBFailureThreshold consecutive failures and stays
 // Open for CBOpenTimeout. Retry uses exponential backoff with jitter and
@@ -134,6 +143,7 @@ func (c *DatabaseQueryConfig) setDefaults() {
 // DatabaseQuery returns a chain tuned for database operations:
 //
 //	CircuitBreaker → Retry (rare, short backoff) → Timeout → operation
+//	(outermost → innermost)
 //
 // Retry is conservative because most database errors are non-transient.
 // The breaker trips later than HTTPClient because false-positive trips on
@@ -298,6 +308,7 @@ func (c *LLMCallConfig[T]) setDefaults() {
 // LLMCall returns a chain tuned for outbound LLM provider calls:
 //
 //	Bulkhead → CircuitBreaker → Retry → Budget → Timeout → operation
+//	(outermost → innermost)
 //
 // The budget sits inside Retry so every attempt is charged, capping the
 // total cost of a retry storm during a provider incident. The budget's
@@ -539,7 +550,12 @@ func llmIsRetryable(assumeIdempotent bool) func(error) bool {
 // RPCDownstream returns a chain tuned for RPC calls to a single downstream
 // service:
 //
-//	CircuitBreaker → Retry → Timeout → operation
+//	CircuitBreaker → Retry → Timeout → operation   (outermost → innermost)
+//
+// Retry is inside the breaker, so the breaker counts one outcome per
+// logical call; CBFailureThreshold is therefore a count of failed calls,
+// not of failed attempts, and does not need to be raised to compensate
+// for MaxRetries.
 //
 // Use one chain per downstream so the breaker and retry state are scoped
 // correctly. Sharing a single chain across multiple downstreams trips
