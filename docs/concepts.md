@@ -183,6 +183,16 @@ Reacts to rising latency *before* failures appear. Slightly more overhead per ca
 
 ## Composition order
 
+**In `middleware.Chain`, the middleware added first is the outermost layer.**
+`New().WithCircuitBreaker(cb).WithRetry(r)` therefore places retry *inside* the
+breaker.
+
 Outer-to-inner: `Bulkhead → RateLimit → CircuitBreaker → Retry → Timeout → operation`.
 
-Rationale and edge cases (retry inside CB vs outside, etc.) in the [composition guide](how-to-compose.md).
+The two placements that most often surprise people:
+
+- **Retry inside the circuit breaker.** The breaker then observes one outcome per logical call, so a blip retry recovers from counts as a success. Outside, each attempt is its own observation and a recovered blip can trip the circuit.
+- **Timeout innermost.** Bounds each attempt rather than the whole retry sequence. Worst-case chain latency is therefore about `MaxAttempts × timeout` plus backoff; use a parent context deadline for a hard total ceiling.
+
+Rationale, the arithmetic behind `FailuresToTrip` vs `MaxAttempts`, and the
+common mis-orderings are in the [composition guide](how-to-compose.md).
