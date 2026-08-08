@@ -45,9 +45,43 @@ Prevents cascading failures by temporarily stopping requests to a failing depend
 | `MaxRequests`   | Trial requests allowed in Half-Open before deciding the verdict.                         |
 | `Interval`      | Closed-state window for counting. Counts reset every `Interval`. Zero = never reset.     |
 | `Timeout`       | How long the breaker stays Open before transitioning to Half-Open. Default 60s.          |
-| `ReadyToTrip`   | Predicate called on each Closed-state failure; return `true` to trip Open.               |
+| `ReadyToTrip`   | Predicate called on each Closed-state failure; return `true` to trip Open. Defaults to `TripOnConsecutiveFailures(5)`. |
 | `IsSuccessful`  | Predicate that classifies an `error` as success/failure (e.g., treat `404` as success). |
 | `OnStateChange` | Async callback for transitions. Delivered in order via dispatcher goroutine.             |
+
+### Trip policies
+
+Two shipped predicates cover most `ReadyToTrip` implementations. Both take plain
+`int` thresholds, so a threshold read from application config needs no `uint32`
+conversion — and therefore no `//nolint:gosec` for
+[G115](https://gosec.io/rules/#g115) — at the call site:
+
+```go
+// Opens after 3 failures in a row. Any success resets the streak.
+ReadyToTrip: circuitbreaker.TripOnConsecutiveFailures(3)
+
+// Opens at a 50% failure rate, once at least 20 requests are recorded.
+ReadyToTrip: circuitbreaker.TripOnFailureRatio(0.5, 20)
+```
+
+Pick by failure shape:
+
+| Downstream behaviour | Consecutive | Ratio |
+| --- | --- | --- |
+| Hard down, every call fails | trips | trips |
+| Degraded, ~50% of calls fail | **never trips** — a success resets the streak | trips |
+| One-off blip | does not trip | does not trip (below `minRequests`) |
+
+`TripOnConsecutiveFailures` cannot see a partially failing downstream: a service
+returning `F S F F S F` never accumulates a streak, so the breaker stays Closed
+however long the degradation lasts. Reach for `TripOnFailureRatio` when
+"degraded but not dead" is a state you need to catch.
+
+Both evaluate over the breaker's counting window, which `Interval` resets
+wholesale — a *tumbling* window, not a sliding one. A burst straddling a reset is
+split into two sub-threshold halves.
+
+Callers needing something else still get the raw `Counts`.
 
 ### When to **not** use a circuit breaker
 
