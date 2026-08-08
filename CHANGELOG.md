@@ -4,10 +4,41 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
 ## [Unreleased]
+
+### ⚠ Breaking
+
+- **`retry` no longer retries `ferrors.ErrCircuitOpen` on the default path.** An
+  open circuit is a decision, not a transient failure: the breaker has already
+  concluded the downstream must be left alone, so retrying its rejection
+  multiplies load on the rejection path and multiplies the latency before the
+  caller sees an error that was known at attempt 1 — during the incident the
+  breaker exists to contain. With retry composed *outside* a breaker, each
+  logical call against an open circuit previously cost `MaxAttempts` rejections
+  spaced by backoff. Explicit classification still wins, so the escape hatch
+  needs no new API: set `IsRetryable`, list the sentinel in `RetryableErrors`,
+  or wrap with `ferrors.AsRetryable`. `ErrBulkheadFull` and
+  `ErrRateLimitExceeded` stay retryable — both describe a queue that drains on
+  its own (#73, closes #69).
 
 ### Added
 
+- **circuitbreaker: `TripOnConsecutiveFailures(n)` and
+  `TripOnFailureRatio(rate, minRequests)`.** `Counts.ConsecutiveFailures` is a
+  `uint32` while a threshold from application config is naturally an `int`, so
+  the most ordinary `ReadyToTrip` in existence needed a narrowing cast that
+  gosec reports as G115 — and the cheap resolution, `//nolint:gosec`, builds the
+  habit of suppressing G115 where it is catching something real. Both shipped
+  predicates take plain `int`s and do the narrowing once, provably in range,
+  inside the library (#75).
+- **`fortify.Execute[T]` and `Chain.WithFallback` / `Composer.WithFallback`.**
+  The spec's core API chains `.WithFallback(...)` on the composed policy and
+  names a typed `fortify.Execute[T](ctx, policy, fn)` free function; the Go
+  `Composer` exposed fallback only standalone and had no `Execute[T]`, so the
+  spec-named spelling now exists and returns the typed result without an
+  `any`-cast (#49).
+- **`metrics/otel`: OpenTelemetry metrics adapter** (#49).
 - **circuitbreaker: sliding-window failure-rate tripping.** Consecutive-failure
   counting only detects a downstream that is *down*; one that is merely degraded
   never accumulates a streak, because any success resets it, so `F S F F S F`
@@ -21,9 +52,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   overrides it, and setting both is logged when a `Logger` is configured
   (#70).
 
-### CI
+### Fixed
 
-- Drop cross-platform matrix + redundant benchmark from every-push CI (#53)
+- **security**: `pymdown-extensions` 11.0.0 → 11.0.1 (GHSA-gm37-52c6-37mw). The
+  earlier bump (#63) landed on 11.0.0, which is the vulnerable version (#77).
+- **security**: `grpc` and `x/text` bumped to patched versions (#61).
+- **ci**: run CI on docs-only PRs, so required checks can report instead of
+  leaving a docs-only PR blocked forever on a check that never starts (#62).
+
+### Docs
+
+- **middleware**: state the layering rule, and fix the timeout contradiction
+  between the composition guide and the reference (#74).
+- **ratelimit**: document `Rate` as per-`Interval`, so sub-1/sec quotas are
+  findable (#72).
+
+### CI / Chore
+
+- **security**: nox remediation batches — dependency and action-pin updates
+  (#60, #64, #65).
+- **nox**: refresh the baseline to fingerprint v2 (nox 1.7.0) (#58).
+- **ci**: adopt the reusable `nox-remediate` workflow and retire dependabot,
+  which it supersedes (#56).
+- Adopt warden — `.warden.yaml` plus the provenance check in CI.
+- Drop cross-platform matrix + redundant benchmark from every-push CI (#53).
 
 ## [1.7.0] - 2026-06-20
 
