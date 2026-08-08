@@ -40,7 +40,8 @@ A pragmatic comparison of Fortify against the most commonly used Go resilience l
 | Closed/Open/HalfOpen FSM      | Yes     | Yes       | Yes         |
 | Generics on result type       | Yes     | No        | Yes         |
 | Custom `IsSuccessful` predicate | Yes   | Yes       | Yes         |
-| Sliding-window counts         | No      | No        | Yes (count- and time-based) |
+| Sliding-window counts         | Yes (count- and time-based) | No | Yes (count- and time-based) |
+| Failure-rate threshold + minimum calls | Yes | No   | Yes         |
 | Lock-free fast path (steady-state Closed) | Yes  | No (RWMutex)  | n/a |
 | Structured error (state, retry-after, counts) | Yes (`*CircuitOpenError`) | No (sentinel only) | No |
 | OTel span attrs               | Yes (`otel/`) | No  | No        |

@@ -285,3 +285,31 @@ func ExampleTripOnFailureRatio() {
 	fmt.Printf("state at a 50%% failure rate: %s\n", cb.State())
 	// Output: state at a 50% failure rate: open
 }
+
+// Example_slidingWindowFailureRate shows failure-rate tripping over a
+// sliding window catching a downstream that is degraded rather than dead.
+// Consecutive-failure counting cannot: every failure below is followed by
+// a success, so no streak ever forms.
+func Example_slidingWindowFailureRate() {
+	cb := circuitbreaker.New[string](circuitbreaker.Config{
+		Timeout:              30 * time.Second,
+		SlidingWindowType:    circuitbreaker.SlidingWindowCount,
+		SlidingWindowSize:    20,  // aggregate the last 20 calls
+		MinimumCalls:         10,  // but wait for 10 before judging
+		FailureRateThreshold: 0.5, // open at a 50% failure rate
+	})
+	defer func() { _ = cb.Close() }()
+
+	ctx := context.Background()
+	for i := 0; i < 10 && cb.State() == circuitbreaker.StateClosed; i++ {
+		_, _ = cb.Execute(ctx, func(context.Context) (string, error) {
+			return "", errors.New("downstream degraded")
+		})
+		_, _ = cb.Execute(ctx, func(context.Context) (string, error) {
+			return "ok", nil
+		})
+	}
+
+	fmt.Printf("state at a 50%% failure rate: %s\n", cb.State())
+	// Output: state at a 50% failure rate: open
+}

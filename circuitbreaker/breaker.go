@@ -37,6 +37,34 @@
 //     failing downstream that consecutive counting misses.
 //
 // Callers needing something bespoke still receive the raw Counts.
+//
+// # Sliding-window failure rate
+//
+// Consecutive-failure counting only detects a downstream that is down.
+// A downstream that is merely degraded — failing, say, half its calls —
+// never accumulates a streak, because any success resets it, so the
+// circuit stays Closed however long the degradation lasts. Config.Interval
+// does not help: it is a tumbling window, so a burst of failures spanning
+// a reset is split into two sub-threshold halves.
+//
+// Set Config.SlidingWindowType to trip on a failure rate over a sliding
+// window instead, as Resilience4j and Polly do by default:
+//
+//	cb := circuitbreaker.New[*Response](circuitbreaker.Config{
+//	    SlidingWindowType:    circuitbreaker.SlidingWindowCount,
+//	    SlidingWindowSize:    100, // last 100 calls
+//	    MinimumCalls:         20,  // ...but not before 20 are in
+//	    FailureRateThreshold: 0.5, // open at 50%
+//	})
+//
+// SlidingWindowCount aggregates the last SlidingWindowSize calls in a
+// circular buffer; SlidingWindowTime aggregates the last
+// SlidingWindowSize seconds in one-second buckets, and is the better
+// default for high-traffic services where a count window fills fast
+// enough to make the breaker jumpy. Neither has a boundary for a burst to
+// straddle.
+//
+// Config.ReadyToTrip overrides the sliding window when both are set.
 package circuitbreaker
 
 import (
@@ -92,6 +120,11 @@ type circuitBreaker[T any] struct {
 	generation    uint64
 	state         State
 
+	// window aggregates recent outcomes for failure-rate tripping. nil
+	// when no sliding window is configured, in which case tripping goes
+	// through config.ReadyToTrip. Guarded by mu.
+	window slidingWindow
+
 	// fastState/fastExpiry/fastGen mirror state/expiry/generation under
 	// atomic semantics. They allow beforeRequest to short-circuit when the
 	// breaker is in steady-state Closed without acquiring mu, restoring the
@@ -120,7 +153,18 @@ func (cb *circuitBreaker[T]) syncFastFields() {
 // New creates a new CircuitBreaker with the given configuration.
 // The circuit breaker starts in the Closed state.
 func New[T any](config Config) CircuitBreaker[T] {
+	// ReadyToTrip is the documented override, so note whether the caller
+	// supplied one before setDefaults populates it.
+	callerSetReadyToTrip := config.ReadyToTrip != nil
+
 	config.setDefaults()
+
+	usesWindow := !callerSetReadyToTrip && config.SlidingWindowType != SlidingWindowDisabled
+	if callerSetReadyToTrip && config.SlidingWindowType != SlidingWindowDisabled && config.Logger != nil {
+		config.Logger.Warn("circuit breaker: ReadyToTrip overrides the sliding-window configuration",
+			slog.String("sliding_window_type", config.SlidingWindowType.String()),
+		)
+	}
 
 	cb := &circuitBreaker[T]{
 		config:     config,
@@ -133,6 +177,10 @@ func New[T any](config Config) CircuitBreaker[T] {
 	cb.fastGen.Store(0)
 	cb.fastExpiry.Store(cb.expiry.UnixNano())
 	cb.fastState.Store(int32(StateClosed))
+
+	if usesWindow {
+		cb.window = newSlidingWindow(&config)
+	}
 
 	if config.OnStateChange != nil {
 		cb.stateChanges = make(chan stateChange, stateChangeBufferSize)
@@ -260,6 +308,9 @@ func (cb *circuitBreaker[T]) Reset() {
 	cb.state = StateClosed
 	cb.generation++
 	cb.counts.reset()
+	if cb.window != nil {
+		cb.window.reset()
+	}
 	cb.expiry = time.Now().Add(cb.config.Interval)
 	cb.syncFastFields()
 
@@ -352,6 +403,16 @@ func (cb *circuitBreaker[T]) onSuccess(state State, now time.Time) {
 	switch state {
 	case StateClosed:
 		cb.counts.onSuccess()
+		if cb.window != nil {
+			// Successes must enter the window too, or the failure rate
+			// has no denominator. Evaluating here as well as on failure
+			// matters only at the MinimumCalls boundary, where a success
+			// can be the call that makes the window eligible.
+			cb.window.record(true, now)
+			if cb.windowTrips(now) {
+				cb.setState(StateOpen, now)
+			}
+		}
 	case StateHalfOpen:
 		cb.counts.onSuccess()
 		if cb.counts.ConsecutiveSuccesses >= cb.config.MaxRequests {
@@ -366,6 +427,13 @@ func (cb *circuitBreaker[T]) onFailure(state State, now time.Time) {
 	switch state {
 	case StateClosed:
 		cb.counts.onFailure()
+		if cb.window != nil {
+			cb.window.record(false, now)
+			if cb.windowTrips(now) {
+				cb.setState(StateOpen, now)
+			}
+			return
+		}
 		if cb.config.ReadyToTrip(cb.counts) {
 			cb.setState(StateOpen, now)
 		}
@@ -385,6 +453,11 @@ func (cb *circuitBreaker[T]) setState(newState State, now time.Time) {
 	cb.state = newState
 	cb.generation++
 	cb.counts.reset()
+	// The window describes the previous regime; a breaker re-entering
+	// Closed after a trial should judge the downstream on fresh evidence.
+	if cb.window != nil {
+		cb.window.reset()
+	}
 
 	switch newState {
 	case StateClosed:

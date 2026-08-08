@@ -83,6 +83,51 @@ split into two sub-threshold halves.
 
 Callers needing something else still get the raw `Counts`.
 
+### Sliding-window failure rate
+
+Both predicates above evaluate over that tumbling window. To count over a window
+with no boundary for a burst to straddle, and to have the rate judged for you
+rather than derived from `Counts`, set `SlidingWindowType` instead — as
+Resilience4j and
+Polly do by default:
+
+```go
+cb := circuitbreaker.New[Response](circuitbreaker.Config{
+    SlidingWindowType:    circuitbreaker.SlidingWindowCount,
+    SlidingWindowSize:    100, // last 100 calls
+    MinimumCalls:         20,  // ...but not before 20 are recorded
+    FailureRateThreshold: 0.5, // open at 50%
+})
+```
+
+| Field | Meaning | Default |
+| --- | --- | --- |
+| `SlidingWindowType` | `SlidingWindowCount`, `SlidingWindowTime`, or `SlidingWindowDisabled` (zero value) | disabled |
+| `SlidingWindowSize` | Calls (count-based) or seconds (time-based) | 100 / 60 |
+| `MinimumCalls` | Calls required before the rate is evaluated | 10 |
+| `FailureRateThreshold` | Ratio in `(0, 1]` at which to open; inclusive | 0.5 |
+
+- **`SlidingWindowCount`** — circular buffer of the last N outcomes. The smaller change, and right for most services.
+- **`SlidingWindowTime`** — the last N seconds in one-second buckets. Better for high-traffic services, where a count window fills fast enough to make the breaker jumpy.
+
+`MinimumCalls` stops a cold breaker opening on one unlucky request. For a
+count-based window it is capped at `SlidingWindowSize`, since a larger value
+could never be reached.
+
+`ReadyToTrip` **overrides** the sliding window when both are set; it remains the
+escape hatch for policies neither shape expresses. Setting both is logged as a
+warning when a `Logger` is configured.
+
+#### It also decouples the threshold from retry's `MaxAttempts`
+
+With consecutive counting and [retry outside the breaker](how-to-compose.md),
+one flaky call contributes up to `MaxAttempts` consecutive failures, so any
+`FailuresToTrip <= MaxAttempts` opens the circuit on a single recovered blip —
+`MaxAttempts: 3` with `FailuresToTrip: 2` trips on the first flaky call. Both
+values look reasonable in isolation, and the coupling is invisible. A rate window
+has no such interaction: two failures and a success inside a window of twenty is
+a 10% failure rate.
+
 ### When to **not** use a circuit breaker
 
 - The downstream is owned by you and idempotent — a bounded retry may be more appropriate.
