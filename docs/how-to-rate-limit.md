@@ -16,6 +16,39 @@ if !rl.Allow(ctx, "global") {
 }
 ```
 
+## Per-minute (and per-hour) quotas
+
+`Rate` is a count **per `Interval`**, not per second. `Interval` carries the
+unit, so a quota published per minute — the form most LLM and third-party APIs
+use — transcribes directly, with no per-second arithmetic:
+
+```go
+// Provider tier documented as "50 RPM".
+rl := ratelimit.New(ratelimit.Config{
+    Rate:     50,
+    Interval: time.Minute,
+    Burst:    10, // cap how much of the quota a single spike may claim
+})
+```
+
+| Quota            | `Rate` | `Interval`    |
+| ---------------- | ------ | ------------- |
+| 10 req/second    | `10`   | `time.Second` |
+| 50 req/minute    | `50`   | `time.Minute` |
+| 4000 req/minute  | `4000` | `time.Minute` |
+| 500 req/hour     | `500`  | `time.Hour`   |
+
+Widening `Interval` is how sustained rates **below one request per second** are
+expressed; `Rate` never needs to be fractional. `Rate: 50, Interval: time.Minute`
+is 0.83 req/sec, which no integer `Rate` at `Interval: time.Second` could state.
+
+Refill is continuous, not stepped: the example above returns roughly one token
+every 1.2s rather than 50 tokens at the top of each minute. `Burst` is the bucket
+capacity and therefore the largest spike allowed — set it equal to `Rate` for a
+strict quota, or lower to smooth traffic further.
+
+`Interval` is clamped to `[MinInterval, MaxInterval]` (1ms to 24h).
+
 ## Per-client limit
 
 ```go

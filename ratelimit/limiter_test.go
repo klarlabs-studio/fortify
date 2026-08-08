@@ -3463,3 +3463,83 @@ func TestSanitizeLogKey(t *testing.T) {
 		}
 	})
 }
+
+// TestRateLimiterRatePerInterval pins the meaning of Rate as "tokens per
+// Interval" rather than "tokens per second". Widening Interval is how
+// sustained rates below one request per second are expressed, so quotas
+// published per minute or per hour need no fractional Rate.
+func TestRateLimiterRatePerInterval(t *testing.T) {
+	t.Parallel()
+
+	t.Run("burst bounds the initial spike regardless of interval", func(t *testing.T) {
+		t.Parallel()
+		tests := []struct {
+			name     string
+			interval time.Duration
+			rate     int
+			burst    int
+			want     int
+		}{
+			{name: "10 per second", interval: time.Second, rate: 10, burst: 10, want: 10},
+			{name: "50 per minute", interval: time.Minute, rate: 50, burst: 50, want: 50},
+			{name: "50 per minute, burst capped", interval: time.Minute, rate: 50, burst: 10, want: 10},
+			{name: "500 per hour", interval: time.Hour, rate: 500, burst: 500, want: 500},
+			{name: "1 per minute", interval: time.Minute, rate: 1, burst: 1, want: 1},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				t.Parallel()
+				limiter := New(Config{
+					Rate:     tt.rate,
+					Burst:    tt.burst,
+					Interval: tt.interval,
+				})
+				defer func() { _ = limiter.Close() }()
+
+				ctx := context.Background()
+				got := 0
+				for i := 0; i < tt.want*2+10; i++ {
+					if limiter.Allow(ctx, "quota-key") {
+						got++
+					}
+				}
+
+				if got != tt.want {
+					t.Errorf("allowed %d requests, want %d", got, tt.want)
+				}
+			})
+		}
+	})
+
+	t.Run("sub-one-per-second sustained rate refills continuously", func(t *testing.T) {
+		t.Parallel()
+		// 50 requests/minute is 0.83/sec: one token roughly every 1.2s.
+		// An int Rate with Interval=time.Second could express neither 0.83
+		// nor a rounded-down alternative, so this is the case Interval exists for.
+		limiter := New(Config{
+			Rate:     50,
+			Burst:    1,
+			Interval: time.Minute,
+		})
+		defer func() { _ = limiter.Close() }()
+
+		ctx := context.Background()
+		if !limiter.Allow(ctx, "slow-key") {
+			t.Fatal("first request should drain the single-token bucket")
+		}
+		if limiter.Allow(ctx, "slow-key") {
+			t.Fatal("second request should be denied before any refill")
+		}
+
+		// Well short of a full Interval: refill is continuous, not stepped.
+		time.Sleep(1300 * time.Millisecond)
+
+		if !limiter.Allow(ctx, "slow-key") {
+			t.Error("a token should be back after ~1.2s at 50/minute")
+		}
+		if limiter.Allow(ctx, "slow-key") {
+			t.Error("only one token should have refilled")
+		}
+	})
+}
