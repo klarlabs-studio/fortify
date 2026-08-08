@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.9.0] - 2026-08-08
+
+First release since 1.8.1 (3 July) — a month of work, including one breaking
+change to `retry`'s default classification. Read that entry before upgrading.
+
+**Why a minor and not a major.** fortify's module path is
+`go.klarlabs.de/fortify`, which Go requires to stay on the v1 major; the
+v2.0.0/v2.1.0 tags were withdrawn once already for exactly this reason (see
+1.7.0). Shipping the break in a minor is a deliberate choice, not an
+oversight — the alternative is a `/v2` module path, and the escape hatch here
+needs no new API.
+
 ### Fixed
 
 - **13 MB of committed binaries no longer ship in the module.** `go build ./...` inside an example writes a binary named after its directory; those are extensionless, so none of `.gitignore`'s patterns (`*.exe`, `*.dll`, `*.so`, `*.dylib`, `*.test`) matched them, and five had been committed. Two — `examples/http/http` and `examples/composition/composition` — are inside the root module, so they went out in the module zip: measured against the published v1.8.1, **13 MB of a 16 MB download**, fetched by every consumer on every platform. `.gitignore` now excludes example build output by path rather than by extension.
