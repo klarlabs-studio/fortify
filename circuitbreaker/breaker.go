@@ -16,14 +16,27 @@
 //	    MaxRequests: 5,
 //	    Interval:    10 * time.Second,
 //	    Timeout:     60 * time.Second,
-//	    ReadyToTrip: func(counts circuitbreaker.Counts) bool {
-//	        return counts.ConsecutiveFailures > 5
-//	    },
+//	    ReadyToTrip: circuitbreaker.TripOnConsecutiveFailures(5),
 //	})
 //
 //	result, err := cb.Execute(ctx, func(ctx context.Context) (*Response, error) {
 //	    return callExternalAPI(ctx)
 //	})
+//
+// # Choosing a trip policy
+//
+// Two predicates cover the large majority of real ReadyToTrip
+// implementations, and both take plain ints so no uint32 conversion (and
+// no gosec G115 suppression) is needed at the call site:
+//
+//   - TripOnConsecutiveFailures(n) — opens after n failures in a row. Any
+//     success resets the streak, so this detects a downstream that is
+//     down, not one that is degraded.
+//   - TripOnFailureRatio(r, minRequests) — opens at a failure rate of r
+//     once minRequests have been recorded. This catches the partially
+//     failing downstream that consecutive counting misses.
+//
+// Callers needing something bespoke still receive the raw Counts.
 package circuitbreaker
 
 import (

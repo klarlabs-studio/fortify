@@ -9,8 +9,17 @@ import (
 type Config struct {
 	// ReadyToTrip is called with a copy of Counts whenever a request fails in the Closed state.
 	// If ReadyToTrip returns true, the circuit breaker transitions from Closed to Open.
-	// If ReadyToTrip is nil, the circuit breaker uses a default function that returns true
-	// when the number of consecutive failures reaches 5.
+	// If ReadyToTrip is nil, the circuit breaker uses
+	// TripOnConsecutiveFailures(DefaultFailuresToTrip).
+	//
+	// Prefer the shipped predicates over a hand-written closure: they take
+	// an int threshold, so no uint32 conversion (and no gosec G115
+	// suppression) is needed at the call site.
+	//
+	//	ReadyToTrip: circuitbreaker.TripOnConsecutiveFailures(cfg.FailuresToTrip)
+	//	ReadyToTrip: circuitbreaker.TripOnFailureRatio(0.5, 20)
+	//
+	// Write your own when neither shape fits; Counts stays available.
 	ReadyToTrip func(counts Counts) bool
 
 	// OnStateChange is called whenever the state of the circuit breaker changes.
@@ -57,9 +66,7 @@ func (c *Config) setDefaults() {
 	}
 
 	if c.ReadyToTrip == nil {
-		c.ReadyToTrip = func(counts Counts) bool {
-			return counts.ConsecutiveFailures >= 5
-		}
+		c.ReadyToTrip = TripOnConsecutiveFailures(DefaultFailuresToTrip)
 	}
 
 	if c.IsSuccessful == nil {

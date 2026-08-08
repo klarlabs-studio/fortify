@@ -235,3 +235,53 @@ func Example_httpClient() {
 	fmt.Printf("HTTP status: %d\n", statusCode)
 	// Output: HTTP status: 200
 }
+
+// ExampleTripOnConsecutiveFailures shows the shipped predicate replacing a
+// hand-written ReadyToTrip. The threshold comes straight from application
+// config as an int, so there is no uint32 conversion at the call site and
+// nothing for gosec's G115 rule to flag.
+func ExampleTripOnConsecutiveFailures() {
+	// Threshold as it would arrive from config/flags — a plain int.
+	failuresToTrip := 3
+
+	cb := circuitbreaker.New[string](circuitbreaker.Config{
+		Timeout:     30 * time.Second,
+		ReadyToTrip: circuitbreaker.TripOnConsecutiveFailures(failuresToTrip),
+	})
+	defer func() { _ = cb.Close() }()
+
+	ctx := context.Background()
+	for i := 0; i < failuresToTrip; i++ {
+		_, _ = cb.Execute(ctx, func(context.Context) (string, error) {
+			return "", errors.New("downstream unavailable")
+		})
+	}
+
+	fmt.Printf("state after %d consecutive failures: %s\n", failuresToTrip, cb.State())
+	// Output: state after 3 consecutive failures: open
+}
+
+// ExampleTripOnFailureRatio shows the ratio predicate catching a downstream
+// that is degraded rather than dead. Consecutive counting cannot: every
+// failure here is followed by a success, so the streak never builds.
+func ExampleTripOnFailureRatio() {
+	cb := circuitbreaker.New[string](circuitbreaker.Config{
+		Timeout: 30 * time.Second,
+		// Trip at a 50% failure rate, but only once 6 requests are in.
+		ReadyToTrip: circuitbreaker.TripOnFailureRatio(0.5, 6),
+	})
+	defer func() { _ = cb.Close() }()
+
+	ctx := context.Background()
+	for i := 0; i < 4 && cb.State() == circuitbreaker.StateClosed; i++ {
+		_, _ = cb.Execute(ctx, func(context.Context) (string, error) {
+			return "", errors.New("downstream flaky")
+		})
+		_, _ = cb.Execute(ctx, func(context.Context) (string, error) {
+			return "ok", nil
+		})
+	}
+
+	fmt.Printf("state at a 50%% failure rate: %s\n", cb.State())
+	// Output: state at a 50% failure rate: open
+}
