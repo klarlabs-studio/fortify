@@ -6,11 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
+### Added
+
+- **circuitbreaker: sliding-window failure-rate tripping.** Consecutive-failure
+  counting only detects a downstream that is *down*; one that is merely degraded
+  never accumulates a streak, because any success resets it, so `F S F F S F`
+  leaves the circuit Closed however long the degradation lasts. `Interval` does
+  not rescue this — it is a *tumbling* window, so a burst spanning a reset is
+  split into two sub-threshold halves. `Config.SlidingWindowType`
+  (`SlidingWindowCount` / `SlidingWindowTime`), `SlidingWindowSize`,
+  `MinimumCalls` and `FailureRateThreshold` add the window both Resilience4j and
+  Polly default to: count-based keeps the last N outcomes in a circular buffer,
+  time-based the last N seconds in one-second buckets. `ReadyToTrip` still
+  overrides it, and setting both is logged when a `Logger` is configured
+  (#70).
+
 ### CI
 
 - Drop cross-platform matrix + redundant benchmark from every-push CI (#53)
-
-## [Unreleased]
 
 ## [1.7.0] - 2026-06-20
 
