@@ -80,12 +80,29 @@ type Config struct {
 
 	// Interval is the time period over which Rate tokens are added.
 	// Defaults to 1 second if zero.
+	//
+	// Interval is the unit of Rate: together they express any quota, not
+	// just per-second ones. Set it to time.Minute to transcribe a
+	// requests-per-minute quota (the form most third-party and LLM
+	// provider docs use) without converting to a per-second figure.
+	//
+	// Refill is continuous, not stepped: with Rate=50 and
+	// Interval=time.Minute one token returns roughly every 1.2s rather
+	// than 50 arriving at once each minute.
+	//
+	// Clamped to [MinInterval, MaxInterval].
 	Interval time.Duration
 
 	// Rate is the number of tokens added to the bucket per Interval.
 	// Must be positive. Defaults to 100 if zero or negative.
 	//
-	// Example: Rate=10 with Interval=time.Second allows 10 requests per second.
+	// Rate is always read relative to Interval, so sub-1/sec sustained
+	// rates are expressed by widening Interval rather than by a
+	// fractional Rate:
+	//
+	//	Rate: 10,  Interval: time.Second  // 10 requests/second
+	//	Rate: 50,  Interval: time.Minute  // 50 requests/minute (0.83/sec)
+	//	Rate: 500, Interval: time.Hour    // 500 requests/hour
 	Rate int
 
 	// Burst is the maximum number of tokens in the bucket (bucket capacity).

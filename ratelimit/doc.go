@@ -22,6 +22,31 @@
 //	    // Return 429 Too Many Requests
 //	}
 //
+// # Expressing a Quota
+//
+// Rate is a count per Interval, so the pair expresses any quota — the
+// Interval is what carries the unit, and it is not restricted to seconds:
+//
+//	Rate: 10,  Interval: time.Second  // 10 requests/second
+//	Rate: 50,  Interval: time.Minute  // 50 requests/minute
+//	Rate: 500, Interval: time.Hour    // 500 requests/hour
+//
+// Widening Interval is how sustained rates below one request per second
+// are configured. Provider quotas stated per minute (as most LLM APIs
+// are) transcribe directly, with no per-second arithmetic:
+//
+//	// Provider tier documented as "50 RPM".
+//	limiter := ratelimit.New(ratelimit.Config{
+//	    Rate:     50,
+//	    Interval: time.Minute,
+//	    Burst:    10, // cap how much of the quota one spike may claim
+//	})
+//
+// Refill is continuous rather than stepped: the example above returns
+// roughly one token every 1.2s, not 50 tokens once a minute. Burst is the
+// bucket capacity and therefore the largest spike allowed; set it equal
+// to Rate for a strict quota, or lower to smooth traffic further.
+//
 // # Storage Backends
 //
 // The rate limiter uses a pluggable Store interface for state management.

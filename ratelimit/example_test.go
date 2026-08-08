@@ -419,3 +419,30 @@ func Example_bucketCount() {
 	// Initial bucket count: 0
 	// After operations: 3 buckets
 }
+
+// Example_perMinuteQuota demonstrates transcribing a provider quota that is
+// documented per minute — the form used by most LLM and third-party APIs —
+// without converting it to a per-second figure. Interval carries the unit,
+// so sustained rates below one request per second need no fractional Rate.
+func Example_perMinuteQuota() {
+	// Provider tier documented as "50 RPM".
+	rl := ratelimit.New(ratelimit.Config{
+		Rate:     50,
+		Interval: time.Minute,
+		Burst:    10, // cap how much of the quota a single spike may claim
+	})
+	defer func() { _ = rl.Close() }()
+
+	ctx := context.Background()
+
+	// The bucket starts full at Burst, so a spike is capped at 10.
+	allowed := 0
+	for i := 0; i < 25; i++ {
+		if rl.Allow(ctx, "openai:gpt-5") {
+			allowed++
+		}
+	}
+
+	fmt.Printf("allowed in spike: %d\n", allowed)
+	// Output: allowed in spike: 10
+}
