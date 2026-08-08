@@ -7,6 +7,22 @@ import (
 
 // Config holds the configuration for a Retry instance.
 //
+// # Default retryability
+//
+// With no classification configured, every error is retried except
+// ferrors.ErrCircuitOpen. An open circuit is a deliberate rejection
+// rather than a transient failure — the breaker has already decided the
+// downstream must be left alone — so retrying it multiplies load on the
+// rejection path and multiplies the latency before the caller sees an
+// error that was known at the first attempt.
+//
+// ferrors.ErrBulkheadFull and ferrors.ErrRateLimitExceeded remain
+// retryable by default: both describe a queue that drains on its own.
+//
+// To retry an open circuit anyway, opt in explicitly with IsRetryable,
+// by listing ferrors.ErrCircuitOpen in RetryableErrors, or by wrapping
+// with ferrors.AsRetryable.
+//
 // Field alignment optimization is intentionally disabled for this public API struct because:
 // 1. This is a user-facing configuration struct that appears in documentation
 // 2. Fields are logically grouped (errors, callbacks, timing, policy) for better API comprehension
@@ -18,7 +34,10 @@ import (
 type Config struct {
 	// RetryableErrors is a list of errors that should trigger a retry.
 	// Uses errors.Is for comparison. If both RetryableErrors and NonRetryableErrors
-	// are nil/empty, and IsRetryable is nil, all errors are considered retryable.
+	// are nil/empty, and IsRetryable is nil, all errors are considered retryable
+	// except ferrors.ErrCircuitOpen (see the "Default retryability" section above).
+	//
+	// Listing ferrors.ErrCircuitOpen here opts back into retrying it.
 	RetryableErrors []error
 
 	// NonRetryableErrors is a list of errors that should NOT trigger a retry.
