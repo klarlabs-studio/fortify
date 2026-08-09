@@ -78,6 +78,15 @@ import (
 	"go.klarlabs.de/fortify/ferrors"
 )
 
+// ErrCircuitOpen is returned when the circuit is open and the call was
+// rejected without running.
+//
+// Same value as ferrors.ErrCircuitOpen, re-exported for the reason
+// bulkhead.ErrBulkheadFull is: Execute's documentation names it, so
+// errors.Is(err, circuitbreaker.ErrCircuitOpen) should compile. Matching on
+// either spelling works.
+var ErrCircuitOpen = ferrors.ErrCircuitOpen
+
 // CircuitBreaker is a generic interface for circuit breaker pattern implementation.
 // It protects against cascading failures by monitoring request outcomes and
 // temporarily blocking requests when a failure threshold is reached.

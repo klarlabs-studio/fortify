@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`bulkhead.ErrBulkheadFull` and `circuitbreaker.ErrCircuitOpen`.** Both
+  packages' doc comments named these sentinels — *"Returns ErrBulkheadFull if
+  the request cannot be accommodated"* — while the values lived only in
+  `ferrors`, so the obvious line did not compile:
+
+  ```go
+  if errors.Is(err, bulkhead.ErrBulkheadFull) { // undefined
+  ```
+
+  A caller had to read the source to learn the sentinel was in `ferrors`, a
+  package they had no other reason to import. Both are now re-exported as the
+  *same value*, so `errors.Is` matches either spelling and existing
+  `ferrors`-based code is unaffected. `ratelimit` and `budget` already owned
+  their sentinel names; this makes the four packages consistent (#71).
+
+### Fixed
+
+- **`ratelimit` now says when it has guessed the unit.** `Rate` is read per
+  `Interval`, and an omitted `Interval` silently means per second. Writing
+  `Config{Rate: 50, Burst: 50}` for a 50-requests-per-minute provider quota
+  yields 50/second — sixty times the allowance — with no error and no warning,
+  making the limiter the cause of the 429s it was added to prevent. `New`
+  cannot return an error without breaking every caller, so the default stays;
+  it now logs a warning naming the effective rate and how to be explicit,
+  when a `Logger` is configured. Behaviour is unchanged (#66).
+
+  The same report claimed a 50 RPM quota could not be expressed at all. It
+  could: `Interval` has existed since the original token-bucket
+  implementation. The real defect was the silent default, which is what this
+  fixes.
+
 ## [1.9.0] - 2026-08-08
 
 First release since 1.8.1 (3 July) — a month of work, including one breaking

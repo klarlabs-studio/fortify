@@ -29,6 +29,20 @@ import (
 	"go.klarlabs.de/fortify/ferrors"
 )
 
+// ErrBulkheadFull is returned when a request cannot be admitted: the worker
+// slots are full and either there is no queue or the queue is full too.
+//
+// It is the same value as ferrors.ErrBulkheadFull, re-exported here because
+// this package's own documentation names it. Without that, the obvious line
+// to write does not compile:
+//
+//	if errors.Is(err, bulkhead.ErrBulkheadFull) { ... }
+//
+// and a caller has to read the source to learn the sentinel lives in ferrors
+// — a package using bulkhead has no other reason to import. errors.Is against
+// either spelling matches, so existing ferrors-based code is unaffected.
+var ErrBulkheadFull = ferrors.ErrBulkheadFull
+
 // Bulkhead is a generic interface for enforcing concurrency limits.
 // It isolates operations to prevent resource exhaustion and provides queue overflow handling.
 type Bulkhead[T any] interface {
