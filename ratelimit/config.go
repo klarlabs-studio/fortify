@@ -2,6 +2,7 @@ package ratelimit
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"time"
 )
@@ -174,6 +175,24 @@ func (c *Config) setDefaults() {
 
 	if c.Interval <= 0 {
 		c.Interval = time.Second
+		// Rate is meaningless without its unit, and the unit is invisible at
+		// the call site: Config{Rate: 50, Burst: 50} reads as "50" and means
+		// "50 per second". Someone expressing a 50-requests-per-minute
+		// provider quota that way gets sixty times their allowance, with no
+		// error and no warning — and the limiter becomes the cause of the
+		// 429s it was added to prevent (#66).
+		//
+		// New cannot return an error without breaking every caller, so the
+		// default stays. It does not have to be silent.
+		if c.Logger != nil {
+			c.Logger.Warn(
+				"ratelimit: Interval not set, defaulting to 1s — Rate is read per Interval",
+				"rate", c.Rate,
+				"interval", time.Second.String(),
+				"effective", fmt.Sprintf("%d per second", c.Rate),
+				"hint", "set Interval explicitly, e.g. Interval: time.Minute for a per-minute quota",
+			)
+		}
 	}
 	// Floor interval to prevent overflow in token calculations (HIGH-01)
 	if c.Interval < MinInterval {
