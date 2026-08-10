@@ -48,6 +48,16 @@ jobs:
       - name: Open PR with the refreshed digest
         uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
         with:
+          # A PR opened with the default GITHUB_TOKEN does not trigger
+          # workflows — GitHub blocks that to prevent a job from recursively
+          # triggering itself. main requires four status checks, so the weekly
+          # PR arrived with none of them reported and could never merge: a bot
+          # opening an unmergeable PR every Monday, indefinitely.
+          #
+          # NOX_TOKEN is a PAT, so its PR triggers CI like any other and the
+          # required checks actually report. Falls back to GITHUB_TOKEN, which
+          # still opens the PR — it just needs an admin merge.
+          token: ${{ secrets.NOX_TOKEN || github.token }}
           commit-message: "chore(changelog): refresh the generated commit digest"
           title: "chore(changelog): refresh the generated commit digest"
           body: |
