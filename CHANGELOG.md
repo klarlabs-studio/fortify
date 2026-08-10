@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.10.0] - 2026-08-10
+
 ### Added
 
 - **`bulkhead.ErrBulkheadFull` and `circuitbreaker.ErrCircuitOpen`.** Both
@@ -39,6 +41,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   could: `Interval` has existed since the original token-bucket
   implementation. The real defect was the silent default, which is what this
   fixes.
+
+- **The weekly changelog PR can now pass its own required checks.** A PR
+  opened with the default `GITHUB_TOKEN` does not trigger workflows — GitHub
+  blocks that so a job cannot recursively trigger itself — so the bot's PR
+  arrived with none of `main`'s four required checks reported and could never
+  merge. It now opens with `NOX_TOKEN`, a PAT, whose PR triggers CI like any
+  other (#82).
 
 ## [1.9.0] - 2026-08-08
 
