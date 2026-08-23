@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1786841235080,
+  "lastUpdate": 1787446114395,
   "repoUrl": "https://github.com/klarlabs-studio/fortify",
   "entries": {
     "Benchmark": [
@@ -60292,6 +60292,1444 @@ window.BENCHMARK_DATA = {
             "value": 4,
             "unit": "allocs/op",
             "extra": "18981282 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "name": "Felix Geelhaar",
+            "username": "felixgeelhaar",
+            "email": "felix@felixgeelhaar.de"
+          },
+          "committer": {
+            "name": "GitHub",
+            "username": "web-flow",
+            "email": "noreply@github.com"
+          },
+          "id": "3e3af7a6b58718ee682c99d82a2afe871373d38b",
+          "message": "ci(warden): let lint run alongside another repository's lint (#84)\n\ngolangci-lint locks the SHARED cache, so a lint running in any other\nrepository on this machine blocks this gate for a minute and it exits\n75. With several agent sessions working the fleet that is constant, and\nit cost multiple re-runs in one afternoon.\n\nwarden already isolates each run's GOLANGCI_LINT_CACHE, which is exactly\nwhat that lock protects, so the flag golangci-lint itself recommends is\nsafe here.\n\nClaude-Session: https://claude.ai/code/session_01N9cWx4ZEypDzzhvnnTiHdy",
+          "timestamp": "2026-08-22T22:44:22Z",
+          "url": "https://github.com/klarlabs-studio/fortify/commit/3e3af7a6b58718ee682c99d82a2afe871373d38b"
+        },
+        "date": 1787446114040,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkAIMDSuccess (go.klarlabs.de/fortify/adaptive)",
+            "value": 12.84,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "280703330 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkAIMDSuccess (go.klarlabs.de/fortify/adaptive) - ns/op",
+            "value": 12.84,
+            "unit": "ns/op",
+            "extra": "280703330 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkAIMDSuccess (go.klarlabs.de/fortify/adaptive) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "280703330 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkAIMDSuccess (go.klarlabs.de/fortify/adaptive) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "280703330 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkAIMDFailure (go.klarlabs.de/fortify/adaptive)",
+            "value": 42.36,
+            "unit": "ns/op\t      24 B/op\t       1 allocs/op",
+            "extra": "84118504 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkAIMDFailure (go.klarlabs.de/fortify/adaptive) - ns/op",
+            "value": 42.36,
+            "unit": "ns/op",
+            "extra": "84118504 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkAIMDFailure (go.klarlabs.de/fortify/adaptive) - B/op",
+            "value": 24,
+            "unit": "B/op",
+            "extra": "84118504 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkAIMDFailure (go.klarlabs.de/fortify/adaptive) - allocs/op",
+            "value": 1,
+            "unit": "allocs/op",
+            "extra": "84118504 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkVegasSuccess (go.klarlabs.de/fortify/adaptive)",
+            "value": 99.2,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "36308098 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkVegasSuccess (go.klarlabs.de/fortify/adaptive) - ns/op",
+            "value": 99.2,
+            "unit": "ns/op",
+            "extra": "36308098 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkVegasSuccess (go.klarlabs.de/fortify/adaptive) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "36308098 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkVegasSuccess (go.klarlabs.de/fortify/adaptive) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "36308098 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkAIMDSuccessParallel (go.klarlabs.de/fortify/adaptive)",
+            "value": 102.7,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "34764712 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkAIMDSuccessParallel (go.klarlabs.de/fortify/adaptive) - ns/op",
+            "value": 102.7,
+            "unit": "ns/op",
+            "extra": "34764712 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkAIMDSuccessParallel (go.klarlabs.de/fortify/adaptive) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "34764712 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkAIMDSuccessParallel (go.klarlabs.de/fortify/adaptive) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "34764712 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBulkheadSuccess (go.klarlabs.de/fortify/bulkhead)",
+            "value": 96.1,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "36957195 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBulkheadSuccess (go.klarlabs.de/fortify/bulkhead) - ns/op",
+            "value": 96.1,
+            "unit": "ns/op",
+            "extra": "36957195 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBulkheadSuccess (go.klarlabs.de/fortify/bulkhead) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "36957195 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBulkheadSuccess (go.klarlabs.de/fortify/bulkhead) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "36957195 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBulkheadWithQueue (go.klarlabs.de/fortify/bulkhead)",
+            "value": 117.9,
+            "unit": "ns/op\t      16 B/op\t       1 allocs/op",
+            "extra": "29930692 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBulkheadWithQueue (go.klarlabs.de/fortify/bulkhead) - ns/op",
+            "value": 117.9,
+            "unit": "ns/op",
+            "extra": "29930692 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBulkheadWithQueue (go.klarlabs.de/fortify/bulkhead) - B/op",
+            "value": 16,
+            "unit": "B/op",
+            "extra": "29930692 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBulkheadWithQueue (go.klarlabs.de/fortify/bulkhead) - allocs/op",
+            "value": 1,
+            "unit": "allocs/op",
+            "extra": "29930692 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBulkheadConcurrent (go.klarlabs.de/fortify/bulkhead)",
+            "value": 192.6,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "18755419 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBulkheadConcurrent (go.klarlabs.de/fortify/bulkhead) - ns/op",
+            "value": 192.6,
+            "unit": "ns/op",
+            "extra": "18755419 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBulkheadConcurrent (go.klarlabs.de/fortify/bulkhead) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "18755419 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBulkheadConcurrent (go.klarlabs.de/fortify/bulkhead) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "18755419 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCircuitBreakerSuccess (go.klarlabs.de/fortify/circuitbreaker)",
+            "value": 133.8,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "27039741 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCircuitBreakerSuccess (go.klarlabs.de/fortify/circuitbreaker) - ns/op",
+            "value": 133.8,
+            "unit": "ns/op",
+            "extra": "27039741 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCircuitBreakerSuccess (go.klarlabs.de/fortify/circuitbreaker) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "27039741 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCircuitBreakerSuccess (go.klarlabs.de/fortify/circuitbreaker) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "27039741 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCircuitBreakerFailure (go.klarlabs.de/fortify/circuitbreaker)",
+            "value": 164.1,
+            "unit": "ns/op\t      24 B/op\t       1 allocs/op",
+            "extra": "22006524 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCircuitBreakerFailure (go.klarlabs.de/fortify/circuitbreaker) - ns/op",
+            "value": 164.1,
+            "unit": "ns/op",
+            "extra": "22006524 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCircuitBreakerFailure (go.klarlabs.de/fortify/circuitbreaker) - B/op",
+            "value": 24,
+            "unit": "B/op",
+            "extra": "22006524 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCircuitBreakerFailure (go.klarlabs.de/fortify/circuitbreaker) - allocs/op",
+            "value": 1,
+            "unit": "allocs/op",
+            "extra": "22006524 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCircuitBreakerOpen (go.klarlabs.de/fortify/circuitbreaker)",
+            "value": 121.8,
+            "unit": "ns/op\t      64 B/op\t       1 allocs/op",
+            "extra": "28354017 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCircuitBreakerOpen (go.klarlabs.de/fortify/circuitbreaker) - ns/op",
+            "value": 121.8,
+            "unit": "ns/op",
+            "extra": "28354017 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCircuitBreakerOpen (go.klarlabs.de/fortify/circuitbreaker) - B/op",
+            "value": 64,
+            "unit": "B/op",
+            "extra": "28354017 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCircuitBreakerOpen (go.klarlabs.de/fortify/circuitbreaker) - allocs/op",
+            "value": 1,
+            "unit": "allocs/op",
+            "extra": "28354017 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCircuitBreakerConcurrent (go.klarlabs.de/fortify/circuitbreaker)",
+            "value": 171.4,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "21168301 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCircuitBreakerConcurrent (go.klarlabs.de/fortify/circuitbreaker) - ns/op",
+            "value": 171.4,
+            "unit": "ns/op",
+            "extra": "21168301 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCircuitBreakerConcurrent (go.klarlabs.de/fortify/circuitbreaker) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "21168301 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCircuitBreakerConcurrent (go.klarlabs.de/fortify/circuitbreaker) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "21168301 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFallback_PrimarySuccess (go.klarlabs.de/fortify/fallback)",
+            "value": 27.93,
+            "unit": "ns/op\t      16 B/op\t       1 allocs/op",
+            "extra": "131201742 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFallback_PrimarySuccess (go.klarlabs.de/fortify/fallback) - ns/op",
+            "value": 27.93,
+            "unit": "ns/op",
+            "extra": "131201742 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFallback_PrimarySuccess (go.klarlabs.de/fortify/fallback) - B/op",
+            "value": 16,
+            "unit": "B/op",
+            "extra": "131201742 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFallback_PrimarySuccess (go.klarlabs.de/fortify/fallback) - allocs/op",
+            "value": 1,
+            "unit": "allocs/op",
+            "extra": "131201742 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFallback_FallbackTriggered (go.klarlabs.de/fortify/fallback)",
+            "value": 38.56,
+            "unit": "ns/op\t      24 B/op\t       1 allocs/op",
+            "extra": "88728657 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFallback_FallbackTriggered (go.klarlabs.de/fortify/fallback) - ns/op",
+            "value": 38.56,
+            "unit": "ns/op",
+            "extra": "88728657 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFallback_FallbackTriggered (go.klarlabs.de/fortify/fallback) - B/op",
+            "value": 24,
+            "unit": "B/op",
+            "extra": "88728657 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFallback_FallbackTriggered (go.klarlabs.de/fortify/fallback) - allocs/op",
+            "value": 1,
+            "unit": "allocs/op",
+            "extra": "88728657 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFallback_WithCallbacks (go.klarlabs.de/fortify/fallback)",
+            "value": 42.26,
+            "unit": "ns/op\t      20 B/op\t       1 allocs/op",
+            "extra": "82829792 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFallback_WithCallbacks (go.klarlabs.de/fortify/fallback) - ns/op",
+            "value": 42.26,
+            "unit": "ns/op",
+            "extra": "82829792 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFallback_WithCallbacks (go.klarlabs.de/fortify/fallback) - B/op",
+            "value": 20,
+            "unit": "B/op",
+            "extra": "82829792 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFallback_WithCallbacks (go.klarlabs.de/fortify/fallback) - allocs/op",
+            "value": 1,
+            "unit": "allocs/op",
+            "extra": "82829792 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHedgePrimaryWins (go.klarlabs.de/fortify/hedge)",
+            "value": 1532,
+            "unit": "ns/op\t     696 B/op\t       9 allocs/op",
+            "extra": "2345131 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHedgePrimaryWins (go.klarlabs.de/fortify/hedge) - ns/op",
+            "value": 1532,
+            "unit": "ns/op",
+            "extra": "2345131 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHedgePrimaryWins (go.klarlabs.de/fortify/hedge) - B/op",
+            "value": 696,
+            "unit": "B/op",
+            "extra": "2345131 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHedgePrimaryWins (go.klarlabs.de/fortify/hedge) - allocs/op",
+            "value": 9,
+            "unit": "allocs/op",
+            "extra": "2345131 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHedgeNoHedging (go.klarlabs.de/fortify/hedge)",
+            "value": 1524,
+            "unit": "ns/op\t     640 B/op\t       9 allocs/op",
+            "extra": "2378767 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHedgeNoHedging (go.klarlabs.de/fortify/hedge) - ns/op",
+            "value": 1524,
+            "unit": "ns/op",
+            "extra": "2378767 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHedgeNoHedging (go.klarlabs.de/fortify/hedge) - B/op",
+            "value": 640,
+            "unit": "B/op",
+            "extra": "2378767 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHedgeNoHedging (go.klarlabs.de/fortify/hedge) - allocs/op",
+            "value": 9,
+            "unit": "allocs/op",
+            "extra": "2378767 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHedgePrimaryWinsParallel (go.klarlabs.de/fortify/hedge)",
+            "value": 645.7,
+            "unit": "ns/op\t     696 B/op\t       9 allocs/op",
+            "extra": "5093240 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHedgePrimaryWinsParallel (go.klarlabs.de/fortify/hedge) - ns/op",
+            "value": 645.7,
+            "unit": "ns/op",
+            "extra": "5093240 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHedgePrimaryWinsParallel (go.klarlabs.de/fortify/hedge) - B/op",
+            "value": 696,
+            "unit": "B/op",
+            "extra": "5093240 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkHedgePrimaryWinsParallel (go.klarlabs.de/fortify/hedge) - allocs/op",
+            "value": 9,
+            "unit": "allocs/op",
+            "extra": "5093240 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRecordCircuitBreakerRequest (go.klarlabs.de/fortify/metrics)",
+            "value": 64.68,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "56615180 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRecordCircuitBreakerRequest (go.klarlabs.de/fortify/metrics) - ns/op",
+            "value": 64.68,
+            "unit": "ns/op",
+            "extra": "56615180 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRecordCircuitBreakerRequest (go.klarlabs.de/fortify/metrics) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "56615180 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRecordCircuitBreakerRequest (go.klarlabs.de/fortify/metrics) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "56615180 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRecordRetryAttempts (go.klarlabs.de/fortify/metrics)",
+            "value": 57.84,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "61571378 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRecordRetryAttempts (go.klarlabs.de/fortify/metrics) - ns/op",
+            "value": 57.84,
+            "unit": "ns/op",
+            "extra": "61571378 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRecordRetryAttempts (go.klarlabs.de/fortify/metrics) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "61571378 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRecordRetryAttempts (go.klarlabs.de/fortify/metrics) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "61571378 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRecordRateLimitAllowed (go.klarlabs.de/fortify/metrics)",
+            "value": 64.81,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "55715053 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRecordRateLimitAllowed (go.klarlabs.de/fortify/metrics) - ns/op",
+            "value": 64.81,
+            "unit": "ns/op",
+            "extra": "55715053 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRecordRateLimitAllowed (go.klarlabs.de/fortify/metrics) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "55715053 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRecordRateLimitAllowed (go.klarlabs.de/fortify/metrics) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "55715053 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRateLimiterAllow (go.klarlabs.de/fortify/ratelimit)",
+            "value": 252.5,
+            "unit": "ns/op\t      75 B/op\t       3 allocs/op",
+            "extra": "13643558 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRateLimiterAllow (go.klarlabs.de/fortify/ratelimit) - ns/op",
+            "value": 252.5,
+            "unit": "ns/op",
+            "extra": "13643558 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRateLimiterAllow (go.klarlabs.de/fortify/ratelimit) - B/op",
+            "value": 75,
+            "unit": "B/op",
+            "extra": "13643558 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRateLimiterAllow (go.klarlabs.de/fortify/ratelimit) - allocs/op",
+            "value": 3,
+            "unit": "allocs/op",
+            "extra": "13643558 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRateLimiterAllowRateLimited (go.klarlabs.de/fortify/ratelimit)",
+            "value": 213.1,
+            "unit": "ns/op\t      33 B/op\t       2 allocs/op",
+            "extra": "16580145 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRateLimiterAllowRateLimited (go.klarlabs.de/fortify/ratelimit) - ns/op",
+            "value": 213.1,
+            "unit": "ns/op",
+            "extra": "16580145 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRateLimiterAllowRateLimited (go.klarlabs.de/fortify/ratelimit) - B/op",
+            "value": 33,
+            "unit": "B/op",
+            "extra": "16580145 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRateLimiterAllowRateLimited (go.klarlabs.de/fortify/ratelimit) - allocs/op",
+            "value": 2,
+            "unit": "allocs/op",
+            "extra": "16580145 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRateLimiterTake (go.klarlabs.de/fortify/ratelimit)",
+            "value": 247.2,
+            "unit": "ns/op\t      66 B/op\t       3 allocs/op",
+            "extra": "14556579 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRateLimiterTake (go.klarlabs.de/fortify/ratelimit) - ns/op",
+            "value": 247.2,
+            "unit": "ns/op",
+            "extra": "14556579 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRateLimiterTake (go.klarlabs.de/fortify/ratelimit) - B/op",
+            "value": 66,
+            "unit": "B/op",
+            "extra": "14556579 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRateLimiterTake (go.klarlabs.de/fortify/ratelimit) - allocs/op",
+            "value": 3,
+            "unit": "allocs/op",
+            "extra": "14556579 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRateLimiterMultipleKeys (go.klarlabs.de/fortify/ratelimit)",
+            "value": 263.7,
+            "unit": "ns/op\t      97 B/op\t       4 allocs/op",
+            "extra": "13485662 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRateLimiterMultipleKeys (go.klarlabs.de/fortify/ratelimit) - ns/op",
+            "value": 263.7,
+            "unit": "ns/op",
+            "extra": "13485662 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRateLimiterMultipleKeys (go.klarlabs.de/fortify/ratelimit) - B/op",
+            "value": 97,
+            "unit": "B/op",
+            "extra": "13485662 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRateLimiterMultipleKeys (go.klarlabs.de/fortify/ratelimit) - allocs/op",
+            "value": 4,
+            "unit": "allocs/op",
+            "extra": "13485662 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRateLimiterConcurrent (go.klarlabs.de/fortify/ratelimit)",
+            "value": 325.9,
+            "unit": "ns/op\t      78 B/op\t       3 allocs/op",
+            "extra": "10516216 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRateLimiterConcurrent (go.klarlabs.de/fortify/ratelimit) - ns/op",
+            "value": 325.9,
+            "unit": "ns/op",
+            "extra": "10516216 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRateLimiterConcurrent (go.klarlabs.de/fortify/ratelimit) - B/op",
+            "value": 78,
+            "unit": "B/op",
+            "extra": "10516216 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRateLimiterConcurrent (go.klarlabs.de/fortify/ratelimit) - allocs/op",
+            "value": 3,
+            "unit": "allocs/op",
+            "extra": "10516216 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkMemoryStoreAtomicUpdate (go.klarlabs.de/fortify/ratelimit)",
+            "value": 172.1,
+            "unit": "ns/op\t      32 B/op\t       1 allocs/op",
+            "extra": "20923765 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkMemoryStoreAtomicUpdate (go.klarlabs.de/fortify/ratelimit) - ns/op",
+            "value": 172.1,
+            "unit": "ns/op",
+            "extra": "20923765 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkMemoryStoreAtomicUpdate (go.klarlabs.de/fortify/ratelimit) - B/op",
+            "value": 32,
+            "unit": "B/op",
+            "extra": "20923765 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkMemoryStoreAtomicUpdate (go.klarlabs.de/fortify/ratelimit) - allocs/op",
+            "value": 1,
+            "unit": "allocs/op",
+            "extra": "20923765 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkMemoryStoreConcurrentUpdate (go.klarlabs.de/fortify/ratelimit)",
+            "value": 211.5,
+            "unit": "ns/op\t      32 B/op\t       1 allocs/op",
+            "extra": "16945216 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkMemoryStoreConcurrentUpdate (go.klarlabs.de/fortify/ratelimit) - ns/op",
+            "value": 211.5,
+            "unit": "ns/op",
+            "extra": "16945216 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkMemoryStoreConcurrentUpdate (go.klarlabs.de/fortify/ratelimit) - B/op",
+            "value": 32,
+            "unit": "B/op",
+            "extra": "16945216 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkMemoryStoreConcurrentUpdate (go.klarlabs.de/fortify/ratelimit) - allocs/op",
+            "value": 1,
+            "unit": "allocs/op",
+            "extra": "16945216 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExecute (go.klarlabs.de/fortify/ratelimit)",
+            "value": 352.8,
+            "unit": "ns/op\t     110 B/op\t       4 allocs/op",
+            "extra": "13442890 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExecute (go.klarlabs.de/fortify/ratelimit) - ns/op",
+            "value": 352.8,
+            "unit": "ns/op",
+            "extra": "13442890 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExecute (go.klarlabs.de/fortify/ratelimit) - B/op",
+            "value": 110,
+            "unit": "B/op",
+            "extra": "13442890 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExecute (go.klarlabs.de/fortify/ratelimit) - allocs/op",
+            "value": 4,
+            "unit": "allocs/op",
+            "extra": "13442890 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExecuteRateLimited (go.klarlabs.de/fortify/ratelimit)",
+            "value": 375.5,
+            "unit": "ns/op\t      89 B/op\t       4 allocs/op",
+            "extra": "9537777 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExecuteRateLimited (go.klarlabs.de/fortify/ratelimit) - ns/op",
+            "value": 375.5,
+            "unit": "ns/op",
+            "extra": "9537777 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExecuteRateLimited (go.klarlabs.de/fortify/ratelimit) - B/op",
+            "value": 89,
+            "unit": "B/op",
+            "extra": "9537777 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExecuteRateLimited (go.klarlabs.de/fortify/ratelimit) - allocs/op",
+            "value": 4,
+            "unit": "allocs/op",
+            "extra": "9537777 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExecuteWithError (go.klarlabs.de/fortify/ratelimit)",
+            "value": 361.5,
+            "unit": "ns/op\t     117 B/op\t       5 allocs/op",
+            "extra": "12009985 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExecuteWithError (go.klarlabs.de/fortify/ratelimit) - ns/op",
+            "value": 361.5,
+            "unit": "ns/op",
+            "extra": "12009985 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExecuteWithError (go.klarlabs.de/fortify/ratelimit) - B/op",
+            "value": 117,
+            "unit": "B/op",
+            "extra": "12009985 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExecuteWithError (go.klarlabs.de/fortify/ratelimit) - allocs/op",
+            "value": 5,
+            "unit": "allocs/op",
+            "extra": "12009985 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExecuteVsAllowDirect/Execute (go.klarlabs.de/fortify/ratelimit)",
+            "value": 359,
+            "unit": "ns/op\t     111 B/op\t       4 allocs/op",
+            "extra": "13348801 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExecuteVsAllowDirect/Execute (go.klarlabs.de/fortify/ratelimit) - ns/op",
+            "value": 359,
+            "unit": "ns/op",
+            "extra": "13348801 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExecuteVsAllowDirect/Execute (go.klarlabs.de/fortify/ratelimit) - B/op",
+            "value": 111,
+            "unit": "B/op",
+            "extra": "13348801 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExecuteVsAllowDirect/Execute (go.klarlabs.de/fortify/ratelimit) - allocs/op",
+            "value": 4,
+            "unit": "allocs/op",
+            "extra": "13348801 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExecuteVsAllowDirect/AllowDirect (go.klarlabs.de/fortify/ratelimit)",
+            "value": 248.3,
+            "unit": "ns/op\t      72 B/op\t       3 allocs/op",
+            "extra": "14356729 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExecuteVsAllowDirect/AllowDirect (go.klarlabs.de/fortify/ratelimit) - ns/op",
+            "value": 248.3,
+            "unit": "ns/op",
+            "extra": "14356729 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExecuteVsAllowDirect/AllowDirect (go.klarlabs.de/fortify/ratelimit) - B/op",
+            "value": 72,
+            "unit": "B/op",
+            "extra": "14356729 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExecuteVsAllowDirect/AllowDirect (go.klarlabs.de/fortify/ratelimit) - allocs/op",
+            "value": 3,
+            "unit": "allocs/op",
+            "extra": "14356729 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExecuteN (go.klarlabs.de/fortify/ratelimit)",
+            "value": 396.1,
+            "unit": "ns/op\t     119 B/op\t       4 allocs/op",
+            "extra": "9254361 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExecuteN (go.klarlabs.de/fortify/ratelimit) - ns/op",
+            "value": 396.1,
+            "unit": "ns/op",
+            "extra": "9254361 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExecuteN (go.klarlabs.de/fortify/ratelimit) - B/op",
+            "value": 119,
+            "unit": "B/op",
+            "extra": "9254361 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExecuteN (go.klarlabs.de/fortify/ratelimit) - allocs/op",
+            "value": 4,
+            "unit": "allocs/op",
+            "extra": "9254361 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExecuteNVsTakeDirect/ExecuteN (go.klarlabs.de/fortify/ratelimit)",
+            "value": 399.1,
+            "unit": "ns/op\t     120 B/op\t       4 allocs/op",
+            "extra": "9310237 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExecuteNVsTakeDirect/ExecuteN (go.klarlabs.de/fortify/ratelimit) - ns/op",
+            "value": 399.1,
+            "unit": "ns/op",
+            "extra": "9310237 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExecuteNVsTakeDirect/ExecuteN (go.klarlabs.de/fortify/ratelimit) - B/op",
+            "value": 120,
+            "unit": "B/op",
+            "extra": "9310237 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExecuteNVsTakeDirect/ExecuteN (go.klarlabs.de/fortify/ratelimit) - allocs/op",
+            "value": 4,
+            "unit": "allocs/op",
+            "extra": "9310237 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExecuteNVsTakeDirect/TakeDirect (go.klarlabs.de/fortify/ratelimit)",
+            "value": 246.3,
+            "unit": "ns/op\t      65 B/op\t       3 allocs/op",
+            "extra": "14531972 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExecuteNVsTakeDirect/TakeDirect (go.klarlabs.de/fortify/ratelimit) - ns/op",
+            "value": 246.3,
+            "unit": "ns/op",
+            "extra": "14531972 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExecuteNVsTakeDirect/TakeDirect (go.klarlabs.de/fortify/ratelimit) - B/op",
+            "value": 65,
+            "unit": "B/op",
+            "extra": "14531972 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExecuteNVsTakeDirect/TakeDirect (go.klarlabs.de/fortify/ratelimit) - allocs/op",
+            "value": 3,
+            "unit": "allocs/op",
+            "extra": "14531972 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBucketCount/Empty (go.klarlabs.de/fortify/ratelimit)",
+            "value": 3.745,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "961111174 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBucketCount/Empty (go.klarlabs.de/fortify/ratelimit) - ns/op",
+            "value": 3.745,
+            "unit": "ns/op",
+            "extra": "961111174 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBucketCount/Empty (go.klarlabs.de/fortify/ratelimit) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "961111174 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBucketCount/Empty (go.klarlabs.de/fortify/ratelimit) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "961111174 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBucketCount/10Buckets (go.klarlabs.de/fortify/ratelimit)",
+            "value": 3.742,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "958737801 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBucketCount/10Buckets (go.klarlabs.de/fortify/ratelimit) - ns/op",
+            "value": 3.742,
+            "unit": "ns/op",
+            "extra": "958737801 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBucketCount/10Buckets (go.klarlabs.de/fortify/ratelimit) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "958737801 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBucketCount/10Buckets (go.klarlabs.de/fortify/ratelimit) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "958737801 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBucketCount/100Buckets (go.klarlabs.de/fortify/ratelimit)",
+            "value": 3.747,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "962956628 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBucketCount/100Buckets (go.klarlabs.de/fortify/ratelimit) - ns/op",
+            "value": 3.747,
+            "unit": "ns/op",
+            "extra": "962956628 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBucketCount/100Buckets (go.klarlabs.de/fortify/ratelimit) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "962956628 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBucketCount/100Buckets (go.klarlabs.de/fortify/ratelimit) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "962956628 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBucketCount/1000Buckets (go.klarlabs.de/fortify/ratelimit)",
+            "value": 3.745,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "962482992 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBucketCount/1000Buckets (go.klarlabs.de/fortify/ratelimit) - ns/op",
+            "value": 3.745,
+            "unit": "ns/op",
+            "extra": "962482992 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBucketCount/1000Buckets (go.klarlabs.de/fortify/ratelimit) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "962482992 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBucketCount/1000Buckets (go.klarlabs.de/fortify/ratelimit) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "962482992 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBucketCount/10000Buckets (go.klarlabs.de/fortify/ratelimit)",
+            "value": 3.755,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "961806950 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBucketCount/10000Buckets (go.klarlabs.de/fortify/ratelimit) - ns/op",
+            "value": 3.755,
+            "unit": "ns/op",
+            "extra": "961806950 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBucketCount/10000Buckets (go.klarlabs.de/fortify/ratelimit) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "961806950 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBucketCount/10000Buckets (go.klarlabs.de/fortify/ratelimit) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "961806950 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReset/10Buckets (go.klarlabs.de/fortify/ratelimit)",
+            "value": 2707,
+            "unit": "ns/op\t     496 B/op\t       5 allocs/op",
+            "extra": "1307846 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReset/10Buckets (go.klarlabs.de/fortify/ratelimit) - ns/op",
+            "value": 2707,
+            "unit": "ns/op",
+            "extra": "1307846 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReset/10Buckets (go.klarlabs.de/fortify/ratelimit) - B/op",
+            "value": 496,
+            "unit": "B/op",
+            "extra": "1307846 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReset/10Buckets (go.klarlabs.de/fortify/ratelimit) - allocs/op",
+            "value": 5,
+            "unit": "allocs/op",
+            "extra": "1307846 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReset/100Buckets (go.klarlabs.de/fortify/ratelimit)",
+            "value": 17408,
+            "unit": "ns/op\t    4464 B/op\t       8 allocs/op",
+            "extra": "185394 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReset/100Buckets (go.klarlabs.de/fortify/ratelimit) - ns/op",
+            "value": 17408,
+            "unit": "ns/op",
+            "extra": "185394 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReset/100Buckets (go.klarlabs.de/fortify/ratelimit) - B/op",
+            "value": 4464,
+            "unit": "B/op",
+            "extra": "185394 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReset/100Buckets (go.klarlabs.de/fortify/ratelimit) - allocs/op",
+            "value": 8,
+            "unit": "allocs/op",
+            "extra": "185394 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReset/1000Buckets (go.klarlabs.de/fortify/ratelimit)",
+            "value": 149907,
+            "unit": "ns/op\t   35184 B/op\t      11 allocs/op",
+            "extra": "23666 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReset/1000Buckets (go.klarlabs.de/fortify/ratelimit) - ns/op",
+            "value": 149907,
+            "unit": "ns/op",
+            "extra": "23666 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReset/1000Buckets (go.klarlabs.de/fortify/ratelimit) - B/op",
+            "value": 35184,
+            "unit": "B/op",
+            "extra": "23666 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReset/1000Buckets (go.klarlabs.de/fortify/ratelimit) - allocs/op",
+            "value": 11,
+            "unit": "allocs/op",
+            "extra": "23666 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReset/10000Buckets (go.klarlabs.de/fortify/ratelimit)",
+            "value": 2509261,
+            "unit": "ns/op\t  665969 B/op\t      18 allocs/op",
+            "extra": "1378 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReset/10000Buckets (go.klarlabs.de/fortify/ratelimit) - ns/op",
+            "value": 2509261,
+            "unit": "ns/op",
+            "extra": "1378 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReset/10000Buckets (go.klarlabs.de/fortify/ratelimit) - B/op",
+            "value": 665969,
+            "unit": "B/op",
+            "extra": "1378 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReset/10000Buckets (go.klarlabs.de/fortify/ratelimit) - allocs/op",
+            "value": 18,
+            "unit": "allocs/op",
+            "extra": "1378 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkResetConcurrent (go.klarlabs.de/fortify/ratelimit)",
+            "value": 9.107,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "396081476 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkResetConcurrent (go.klarlabs.de/fortify/ratelimit) - ns/op",
+            "value": 9.107,
+            "unit": "ns/op",
+            "extra": "396081476 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkResetConcurrent (go.klarlabs.de/fortify/ratelimit) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "396081476 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkResetConcurrent (go.klarlabs.de/fortify/ratelimit) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "396081476 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkConcurrentExecute (go.klarlabs.de/fortify/ratelimit)",
+            "value": 447.4,
+            "unit": "ns/op\t     107 B/op\t       4 allocs/op",
+            "extra": "10343290 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkConcurrentExecute (go.klarlabs.de/fortify/ratelimit) - ns/op",
+            "value": 447.4,
+            "unit": "ns/op",
+            "extra": "10343290 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkConcurrentExecute (go.klarlabs.de/fortify/ratelimit) - B/op",
+            "value": 107,
+            "unit": "B/op",
+            "extra": "10343290 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkConcurrentExecute (go.klarlabs.de/fortify/ratelimit) - allocs/op",
+            "value": 4,
+            "unit": "allocs/op",
+            "extra": "10343290 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRetrySuccess (go.klarlabs.de/fortify/retry)",
+            "value": 7.809,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "460805814 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRetrySuccess (go.klarlabs.de/fortify/retry) - ns/op",
+            "value": 7.809,
+            "unit": "ns/op",
+            "extra": "460805814 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRetrySuccess (go.klarlabs.de/fortify/retry) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "460805814 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRetrySuccess (go.klarlabs.de/fortify/retry) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "460805814 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRetryFailure (go.klarlabs.de/fortify/retry)",
+            "value": 3220781,
+            "unit": "ns/op\t     320 B/op\t       7 allocs/op",
+            "extra": "1117 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRetryFailure (go.klarlabs.de/fortify/retry) - ns/op",
+            "value": 3220781,
+            "unit": "ns/op",
+            "extra": "1117 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRetryFailure (go.klarlabs.de/fortify/retry) - B/op",
+            "value": 320,
+            "unit": "B/op",
+            "extra": "1117 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRetryFailure (go.klarlabs.de/fortify/retry) - allocs/op",
+            "value": 7,
+            "unit": "allocs/op",
+            "extra": "1117 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRetryWithJitter (go.klarlabs.de/fortify/retry)",
+            "value": 4170630,
+            "unit": "ns/op\t     320 B/op\t       7 allocs/op",
+            "extra": "862 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRetryWithJitter (go.klarlabs.de/fortify/retry) - ns/op",
+            "value": 4170630,
+            "unit": "ns/op",
+            "extra": "862 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRetryWithJitter (go.klarlabs.de/fortify/retry) - B/op",
+            "value": 320,
+            "unit": "B/op",
+            "extra": "862 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRetryWithJitter (go.klarlabs.de/fortify/retry) - allocs/op",
+            "value": 7,
+            "unit": "allocs/op",
+            "extra": "862 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBackoffCalculation/exponential (go.klarlabs.de/fortify/retry)",
+            "value": 21.92,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "164880192 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBackoffCalculation/exponential (go.klarlabs.de/fortify/retry) - ns/op",
+            "value": 21.92,
+            "unit": "ns/op",
+            "extra": "164880192 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBackoffCalculation/exponential (go.klarlabs.de/fortify/retry) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "164880192 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBackoffCalculation/exponential (go.klarlabs.de/fortify/retry) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "164880192 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBackoffCalculation/linear (go.klarlabs.de/fortify/retry)",
+            "value": 4.063,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "882518653 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBackoffCalculation/linear (go.klarlabs.de/fortify/retry) - ns/op",
+            "value": 4.063,
+            "unit": "ns/op",
+            "extra": "882518653 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBackoffCalculation/linear (go.klarlabs.de/fortify/retry) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "882518653 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBackoffCalculation/linear (go.klarlabs.de/fortify/retry) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "882518653 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBackoffCalculation/constant (go.klarlabs.de/fortify/retry)",
+            "value": 4.066,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "887493892 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBackoffCalculation/constant (go.klarlabs.de/fortify/retry) - ns/op",
+            "value": 4.066,
+            "unit": "ns/op",
+            "extra": "887493892 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBackoffCalculation/constant (go.klarlabs.de/fortify/retry) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "887493892 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBackoffCalculation/constant (go.klarlabs.de/fortify/retry) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "887493892 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBackoffCalculation/with_jitter (go.klarlabs.de/fortify/retry)",
+            "value": 30.69,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "100000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBackoffCalculation/with_jitter (go.klarlabs.de/fortify/retry) - ns/op",
+            "value": 30.69,
+            "unit": "ns/op",
+            "extra": "100000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBackoffCalculation/with_jitter (go.klarlabs.de/fortify/retry) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "100000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBackoffCalculation/with_jitter (go.klarlabs.de/fortify/retry) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "100000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkErrorInjector_ShouldFail (go.klarlabs.de/fortify/testing)",
+            "value": 20.68,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "174173677 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkErrorInjector_ShouldFail (go.klarlabs.de/fortify/testing) - ns/op",
+            "value": 20.68,
+            "unit": "ns/op",
+            "extra": "174173677 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkErrorInjector_ShouldFail (go.klarlabs.de/fortify/testing) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "174173677 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkErrorInjector_ShouldFail (go.klarlabs.de/fortify/testing) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "174173677 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLatencyInjector_Delay (go.klarlabs.de/fortify/testing)",
+            "value": 69976,
+            "unit": "ns/op\t     248 B/op\t       3 allocs/op",
+            "extra": "59964 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLatencyInjector_Delay (go.klarlabs.de/fortify/testing) - ns/op",
+            "value": 69976,
+            "unit": "ns/op",
+            "extra": "59964 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLatencyInjector_Delay (go.klarlabs.de/fortify/testing) - B/op",
+            "value": 248,
+            "unit": "B/op",
+            "extra": "59964 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLatencyInjector_Delay (go.klarlabs.de/fortify/testing) - allocs/op",
+            "value": 3,
+            "unit": "allocs/op",
+            "extra": "59964 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFlakeyService_Call (go.klarlabs.de/fortify/testing)",
+            "value": 67289,
+            "unit": "ns/op\t     248 B/op\t       3 allocs/op",
+            "extra": "60390 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFlakeyService_Call (go.klarlabs.de/fortify/testing) - ns/op",
+            "value": 67289,
+            "unit": "ns/op",
+            "extra": "60390 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFlakeyService_Call (go.klarlabs.de/fortify/testing) - B/op",
+            "value": 248,
+            "unit": "B/op",
+            "extra": "60390 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFlakeyService_Call (go.klarlabs.de/fortify/testing) - allocs/op",
+            "value": 3,
+            "unit": "allocs/op",
+            "extra": "60390 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkTimeoutSuccess (go.klarlabs.de/fortify/timeout)",
+            "value": 411.6,
+            "unit": "ns/op\t     272 B/op\t       4 allocs/op",
+            "extra": "8845929 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkTimeoutSuccess (go.klarlabs.de/fortify/timeout) - ns/op",
+            "value": 411.6,
+            "unit": "ns/op",
+            "extra": "8845929 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkTimeoutSuccess (go.klarlabs.de/fortify/timeout) - B/op",
+            "value": 272,
+            "unit": "B/op",
+            "extra": "8845929 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkTimeoutSuccess (go.klarlabs.de/fortify/timeout) - allocs/op",
+            "value": 4,
+            "unit": "allocs/op",
+            "extra": "8845929 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkTimeoutWithShortOperation (go.klarlabs.de/fortify/timeout)",
+            "value": 438.6,
+            "unit": "ns/op\t     288 B/op\t       5 allocs/op",
+            "extra": "8191369 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkTimeoutWithShortOperation (go.klarlabs.de/fortify/timeout) - ns/op",
+            "value": 438.6,
+            "unit": "ns/op",
+            "extra": "8191369 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkTimeoutWithShortOperation (go.klarlabs.de/fortify/timeout) - B/op",
+            "value": 288,
+            "unit": "B/op",
+            "extra": "8191369 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkTimeoutWithShortOperation (go.klarlabs.de/fortify/timeout) - allocs/op",
+            "value": 5,
+            "unit": "allocs/op",
+            "extra": "8191369 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkTimeoutConcurrent (go.klarlabs.de/fortify/timeout)",
+            "value": 197.5,
+            "unit": "ns/op\t     272 B/op\t       4 allocs/op",
+            "extra": "18130156 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkTimeoutConcurrent (go.klarlabs.de/fortify/timeout) - ns/op",
+            "value": 197.5,
+            "unit": "ns/op",
+            "extra": "18130156 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkTimeoutConcurrent (go.klarlabs.de/fortify/timeout) - B/op",
+            "value": 272,
+            "unit": "B/op",
+            "extra": "18130156 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkTimeoutConcurrent (go.klarlabs.de/fortify/timeout) - allocs/op",
+            "value": 4,
+            "unit": "allocs/op",
+            "extra": "18130156 times\n4 procs"
           }
         ]
       }
