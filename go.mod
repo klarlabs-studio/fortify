@@ -2,6 +2,8 @@ module go.klarlabs.de/fortify
 
 go 1.25.0
 
+toolchain go1.25.14
+
 require (
 	github.com/prometheus/client_golang v1.23.2
 	go.opentelemetry.io/otel v1.44.0
