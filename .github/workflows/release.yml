@@ -28,8 +28,12 @@ jobs:
       run: go test -v -race ./...
 
     - name: Install nox
+      # nox v1.63.0 needs a newer Go than this job sets up; let `go install`
+      # fetch the matching toolchain instead of failing under GOTOOLCHAIN=local.
+      env:
+        GOTOOLCHAIN: auto
       run: |
-        go install github.com/nox-hq/nox/cli@v0.8.1
+        go install github.com/nox-hq/nox/cli@v1.63.0
         mv "$(go env GOPATH)/bin/cli" "$(go env GOPATH)/bin/nox"
 
     - name: Generate release SBOM
