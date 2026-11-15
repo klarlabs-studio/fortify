@@ -15,21 +15,41 @@ import (
 	"log"
 	"math/rand/v2"
 	"net/http"
+	"os"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.klarlabs.de/fortify/circuitbreaker"
 	"go.klarlabs.de/fortify/ferrors"
 	"go.klarlabs.de/fortify/metrics"
 	"go.klarlabs.de/fortify/middleware"
 	"go.klarlabs.de/fortify/retry"
 	"go.klarlabs.de/fortify/timeout"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 const cbName = "downstream"
 
+// healthcheck probes the running app's /healthz endpoint. The runtime image
+// is distroless (no shell, wget or curl), so container health checks invoke
+// the binary itself: `/sample-app healthcheck`.
+func healthcheck() int {
+	client := &http.Client{Timeout: 2 * time.Second}
+	resp, err := client.Get("http://127.0.0.1:8080/healthz")
+	if err != nil {
+		return 1
+	}
+	defer func() { _ = resp.Body.Close() }()
+	if resp.StatusCode != http.StatusOK {
+		return 1
+	}
+	return 0
+}
+
 func main() {
+	if len(os.Args) > 1 && os.Args[1] == "healthcheck" {
+		os.Exit(healthcheck())
+	}
 	collector := metrics.NewCollector()
 	registry := prometheus.NewRegistry()
 	registry.MustRegister(collector)

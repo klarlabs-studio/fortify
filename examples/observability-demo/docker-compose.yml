@@ -21,14 +21,23 @@ services:
       dockerfile: examples/observability-demo/Dockerfile
     ports:
       - "8080:8080"
+    mem_limit: 256m
+    cpus: 0.5
     healthcheck:
-      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:8080/metrics"]
+      test: ["CMD", "/sample-app", "healthcheck"]
       interval: 5s
       timeout: 2s
       retries: 5
 
   prometheus:
-    image: prom/prometheus:v2.55.1
+    image: prom/prometheus:v2.55.1@sha256:2659f4c2ebb718e7695cb9b25ffa7d6be64db013daba13e05c875451cf51b0d3
+    mem_limit: 512m
+    cpus: 0.5
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:9090/-/healthy"]
+      interval: 5s
+      timeout: 2s
+      retries: 5
     ports:
       - "9090:9090"
     volumes:
@@ -38,13 +47,20 @@ services:
         condition: service_healthy
 
   grafana:
-    image: grafana/grafana:11.4.0
+    image: grafana/grafana:11.4.0@sha256:d8ea37798ccc41061a62ab080f2676dda6bf7815558499f901bdb0f533a456fb
+    mem_limit: 512m
+    cpus: 0.5
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:3000/api/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
     ports:
       - "3000:3000"
     environment:
       - GF_AUTH_ANONYMOUS_ENABLED=true
       - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
-      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
     volumes:
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
       - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
