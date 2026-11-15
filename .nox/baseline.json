@@ -42,6 +42,14 @@
       "file_path": "examples/observability-demo/Dockerfile",
       "severity": "medium",
       "created_at": "2026-07-06T11:03:34.021845Z"
+    },
+    {
+      "fingerprint": "ac4272d09a7fb807b169eb8e26b2b5b3046ed481b7071ad520cffde9ba1e02fd",
+      "rule_id": "VULN-001",
+      "file_path": "examples/observability-demo/Dockerfile",
+      "severity": "medium",
+      "reason": "ALPINE-CVE-2026-4738 zlib in build-only stage of golang:1.27-alpine; fix zlib 1.4-r0 not yet published; not shipped in runtime image. Tracking: https://github.com/klarlabs-studio/fortify/issues/94",
+      "created_at": "2026-11-15T11:38:08.884236Z"
     }
   ]
 }
