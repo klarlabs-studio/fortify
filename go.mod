@@ -1,6 +1,6 @@
 module go.klarlabs.de/fortify
 
-go 1.26.0
+go 1.26.11
 
 require (
 	github.com/prometheus/client_golang v1.23.2
