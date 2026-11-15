@@ -7,6 +7,7 @@
 [![Go Report Card](https://goreportcard.com/badge/go.klarlabs.de/fortify)](https://goreportcard.com/report/go.klarlabs.de/fortify)
 [![CI Status](https://github.com/klarlabs-studio/fortify/workflows/CI/badge.svg)](https://github.com/klarlabs-studio/fortify/actions/workflows/ci.yml)
 [![Coverage](./assets/coverage-badge.svg)](./assets/coverage-badge.svg)
+[![nox security grade](.github/nox-badge.svg)](.github/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Go Version](https://img.shields.io/github/go-mod/go-version/klarlabs-studio/fortify)](https://github.com/klarlabs-studio/fortify)
 [![Release](https://img.shields.io/github/v/release/klarlabs-studio/fortify)](https://github.com/klarlabs-studio/fortify/releases)
